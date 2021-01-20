@@ -1,6 +1,8 @@
 import {
   ComponentBindings,
+  ForwardRef,
   OneWay,
+  RefObject,
 } from 'devextreme-generator/component_declaration/common';
 
 import { ScrollableDirection, ScrollableShowScrollbar } from './types.d';
@@ -21,4 +23,6 @@ export class ScrollbarProps extends ScrollableInternalProps {
   @OneWay() direction: ScrollableDirection = 'vertical';
 
   @OneWay() needScrollbar = false;
+
+  @ForwardRef() scrollbarElementRef?: RefObject<HTMLDivElement>;
 }

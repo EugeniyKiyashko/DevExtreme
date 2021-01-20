@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Component,
   JSXComponent,
   Method,
   Ref,
+  ForwardRef,
   Effect,
   RefObject,
   ComponentBindings,
@@ -15,8 +17,11 @@ import { Scrollbar } from './scrollbar';
 import { Widget } from '../common/widget';
 import { combineClasses } from '../../utils/combine_classes';
 import { DisposeEffectReturn } from '../../utils/effect_return.d';
-import { normalizeKeyName } from '../../../events/utils/index';
+import { normalizeKeyName, isDxMouseWheelEvent } from '../../../events/utils/index';
 import { getWindow, hasWindow } from '../../../core/utils/window';
+// import { when, Deferred } from '../../../core/utils/deferred';
+import $ from '../../../core/renderer';
+
 import BaseWidgetProps from '../../utils/base_props';
 import {
   ScrollableProps,
@@ -78,6 +83,8 @@ function visibilityModeNormalize(mode: any): ScrollableShowScrollbar {
 export const viewFunction = (viewModel: ScrollableSimulated): JSX.Element => {
   const {
     cssClasses, wrapperRef, contentRef, containerRef, onWidgetKeyDown,
+    horizontalScrollbarElementRef, verticalScrollbarElementRef,
+    horizontalScrollbarRef, verticalScrollbarRef,
     cursorEnterHandler, cursorLeaveHandler,
     isScrollbarVisible, needScrollbar,
     props: {
@@ -133,6 +140,8 @@ export const viewFunction = (viewModel: ScrollableSimulated): JSX.Element => {
           </div>
           {isHorizontal && (
             <Scrollbar
+              ref={horizontalScrollbarRef}
+              scrollbarElementRef={horizontalScrollbarElementRef}
               direction="horizontal"
               visible={isScrollbarVisible}
               visibilityMode={visibilityMode}
@@ -142,6 +151,8 @@ export const viewFunction = (viewModel: ScrollableSimulated): JSX.Element => {
           )}
           {isVertical && (
             <Scrollbar
+              ref={verticalScrollbarRef}
+              scrollbarElementRef={verticalScrollbarElementRef}
               direction="vertical"
               visible={isScrollbarVisible}
               visibilityMode={visibilityMode}
@@ -181,9 +192,19 @@ export class ScrollableSimulated extends JSXComponent<ScrollableSimulatedPropsTy
 
   @Ref() containerRef!: RefObject<HTMLDivElement>;
 
+  @Ref() verticalScrollbarRef!: RefObject<Scrollbar>;
+
+  @Ref() horizontalScrollbarRef!: RefObject<Scrollbar>;
+
+  @ForwardRef() verticalScrollbarElementRef!: RefObject<HTMLDivElement>;
+
+  @ForwardRef() horizontalScrollbarElementRef!: RefObject<HTMLDivElement>;
+
   @InternalState() isHovered = false;
 
   @InternalState() baseContainerToContentRatio = 0;
+
+  @InternalState() validDirections = {};
 
   @Method()
   content(): HTMLDivElement {
@@ -381,9 +402,204 @@ export class ScrollableSimulated extends JSXComponent<ScrollableSimulatedPropsTy
 
   /* istanbul ignore next */
   // eslint-disable-next-line
-  initHandler(event: Event): void {
+  initHandler(e: Event): void {
+    this.suppressDirections(e);
+    // this._eventForUserAction = e;
     // console.log('initHandler', event, this);
+    this.eventHandler('init' /* e */).done(() => {
+      // console.log('done');
+    });
   }
+
+  suppressDirections(e: any): void {
+    if (isDxMouseWheelEvent(e.originalEvent)) {
+      this.prepareDirections(true);
+      // console.log(this.validDirections);
+      return;
+    }
+
+    this.prepareDirections();
+
+    const { isVertical, isHorizontal } = new ScrollDirection(this.props.direction);
+    if (isVertical) {
+      const isValid = this.validateEvent(e, this.verticalScrollbarRef);
+      this.validDirections[DIRECTION_VERTICAL] = isValid;
+    }
+
+    if (isHorizontal) {
+      const isValid = this.validateEvent(e, this.horizontalScrollbarRef);
+      this.validDirections[DIRECTION_HORIZONTAL] = isValid;
+    }
+  }
+
+  validateEvent(e, scrollbarRef): boolean {
+    const $target = $(e.originalEvent.target);
+
+    return this.isThumb($target, scrollbarRef)
+    || this.isScrollbar($target, scrollbarRef)
+    || this.isContent($target, scrollbarRef);
+  }
+
+  isThumb($element, scrollbarRef): boolean {
+    return this.props.scrollByThumb
+    && !!$element.closest(scrollbarRef).length;
+  }
+
+  isScrollbar($element, scrollbarRef): boolean {
+    return this.props.scrollByThumb && $element && $element.is(scrollbarRef);
+  }
+
+  isContent($element, scrollbarRef): boolean {
+    return this.props.scrollByContent && !!$element.closest(scrollbarRef).length;
+  }
+
+  prepareDirections(value?: boolean): void {
+    const newValue = value || false;
+    this.validDirections = {
+      [DIRECTION_HORIZONTAL]: newValue,
+      [DIRECTION_VERTICAL]: newValue,
+    };
+  }
+
+  eventHandler(eventName: string): any {
+    // eslint-disable-next-line prefer-rest-params
+    // const args = [].slice.call(arguments).slice(1);
+    // const deferreds = [];
+
+    const { isVertical, isHorizontal } = new ScrollDirection(this.props.direction);
+    if (isVertical) {
+      // deferreds.push(this.scrollbarInitHandler(args, this.verticalScrollbarElementRef));
+    }
+
+    if (isHorizontal) {
+      // deferreds.push(this.scrollbarInitHandler.apply(
+      // this.horizontalScrollbarRef, [args, this.horizontalScrollbarElementRef]));
+    }
+    // const deferreds = map(this._scrollers,
+    // (scroller) => scroller[`_${eventName}Handler`].apply(scroller, args));
+
+    return 1; // when.apply($, deferreds).promise();
+  }
+
+  // eslint-disable-next-line
+  scrollbarInitHandler(e, scrollbarRef): any {
+    // const stopDeferred = new Deferred();
+
+    // this._stopScrolling();
+    this.prepareThumbScrolling(e, scrollbarRef);
+    // return stopDeferred.promise();
+  }
+
+  prepareThumbScrolling(e, scrollbarRef): void {
+    if (isDxMouseWheelEvent(e[0].originalEvent)) {
+      return;
+    }
+
+    const $target = $(e[0].originalEvent.target);
+    const scrollbarClicked = this.isScrollbar($target, scrollbarRef);
+
+    if (scrollbarClicked) {
+      this.moveToMouseLocation(e[0], scrollbarRef);
+    }
+
+    // this._thumbScrolling = scrollbarClicked || this.isThumb($target, scrollbarRef);
+    // this._crossThumbScrolling = !this._thumbScrolling && this._isAnyThumbScrolling($target);
+
+    // if (this._thumbScrolling) {
+    //   this._scrollbar.feedbackOn();
+    // }
+  }
+
+  moveToMouseLocation(e, scrollbarRef): void {
+    const isHorizontal = scrollbarRef.classList.contains('dx-scrollbar-horizontal');
+
+    const axis = isHorizontal ? 'x' : 'y';
+    const prop = isHorizontal ? 'left' : 'top';
+
+    const mouseLocation = e[`page${axis.toUpperCase()}`];
+    /* - $(scrollbarRef).offset()[prop] */
+    // const location = this._location + mouseLocation
+    // / this._containerToContentRatio() - $(this.containerRef).height() / 2;
+
+    const location = mouseLocation - getElementHeight(this.containerRef) / 2;
+    this.scrollStep(-Math.round(location), scrollbarRef);
+  }
+
+  scrollStep(delta, scrollbarRef): void {
+    // const prevLocation = this._location;
+
+    // this._location += delta;
+    // this._suppressBounce();
+    this.moveFunc(scrollbarRef);
+
+    // if (Math.abs(prevLocation - this._location) < 1) {
+    //   return;
+    // }
+
+    // eventsEngine.triggerHandler(this.containerRef, { type: 'scroll' });
+  }
+
+  moveFunc(scrollbarRef): void { // location parameter
+    // this._location = location !== undefined
+    // ? location * this._getScaleRatio() : this._location;
+    // this.moveContent();
+    this.moveScrollbar(scrollbarRef);
+  }
+
+  moveScrollbar(scrollbarRef): void {
+    // this.moveTo(this._location);
+    const isHorizontal = scrollbarRef.classList.contains('dx-scrollbar-horizontal');
+    const isVertical = scrollbarRef.classList.contains('dx-scrollbar-vertical');
+
+    if (isVertical) {
+      this.verticalScrollbarRef.moveTo({ top: -100, left: -100 });
+    }
+    if (isHorizontal) {
+      this.horizontalScrollbarRef.moveTo({ top: -100, left: -100 });
+    }
+  }
+
+  // moveContent() {
+  //   const location = this._location;
+
+  //   this._$container[this._scrollProp](-location / this._getScaleRatio());
+  //   this.moveContentByTranslator(location);
+  // }
+
+  // moveContentByTranslator(location) {
+  //   let translateOffset;
+  //   const minOffset = -this._maxScrollPropValue;
+
+  //   if (location > 0) {
+  //     translateOffset = location;
+  //   } else if (location <= minOffset) {
+  //     translateOffset = location - minOffset;
+  //   } else {
+  //     translateOffset = location % 1;
+  //   }
+
+  //   if (this._translateOffset === translateOffset) {
+  //     return;
+  //   }
+
+  //   const targetLocation = {};
+  //   targetLocation[this._prop] = translateOffset;
+  //   this._translateOffset = translateOffset;
+
+  //   if (translateOffset === 0) {
+  //     resetPosition(this._$content);
+  //     return;
+  //   }
+
+  //   move(this._$content, targetLocation);
+  // }
+
+  // eachScroller(callback) {
+  //   callback = callback.bind(this);
+  //   each(this._scrollers, (direction, scroller) => {
+  //     callback(scroller, direction);
+  //   });
+  // }
   /* istanbul ignore next */
   // eslint-disable-next-line
   private handleStart(event: Event): void {

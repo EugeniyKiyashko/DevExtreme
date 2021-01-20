@@ -5,15 +5,19 @@ import {
   RefObject,
   Ref,
   Effect,
+  Method,
 } from 'devextreme-generator/component_declaration/common';
 
 import { Widget } from '../common/widget';
 import { combineClasses } from '../../utils/combine_classes';
 import { DisposeEffectReturn } from '../../utils/effect_return.d';
 import domAdapter from '../../../core/dom_adapter';
+import { isPlainObject } from '../../../core/utils/type';
+import { move } from '../../../animation/translator';
 
 import { ScrollbarProps } from './scrollbar_props';
 import {
+  DIRECTION_HORIZONTAL,
   ScrollDirection,
 } from './scrollable_utils';
 
@@ -33,19 +37,20 @@ const THUMB_MIN_SIZE = 15;
 export const viewFunction = (viewModel: Scrollbar): JSX.Element => {
   const {
     cssClasses, styles, scrollRef, hoverStateEnabled,
-    props: { activeStateEnabled },
+    props: { activeStateEnabled, scrollbarElementRef },
     restAttributes,
   } = viewModel;
 
   return (
     <Widget
+      rootElementRef={scrollbarElementRef}
       classes={cssClasses}
       activeStateEnabled={activeStateEnabled}
       hoverStateEnabled={hoverStateEnabled}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...restAttributes}
     >
-      <div className={viewModel.scrollClasses} style={styles} ref={scrollRef}>
+      <div className={SCROLLABLE_SCROLL_CLASS} style={styles} ref={scrollRef}>
         <div className={SCROLLABLE_SCROLL_CONTENT_CLASS} />
       </div>
     </Widget>
@@ -56,8 +61,13 @@ export const viewFunction = (viewModel: Scrollbar): JSX.Element => {
   defaultOptionRules: null,
   view: viewFunction,
 })
+
 export class Scrollbar extends JSXComponent<ScrollbarProps>() {
+  @InternalState() baseContainerToContentRatio = 0;
+
   @InternalState() active = false;
+
+  @InternalState() location = 0;
 
   @Ref() scrollRef!: RefObject<HTMLDivElement>;
 
@@ -85,6 +95,31 @@ export class Scrollbar extends JSXComponent<ScrollbarProps>() {
     return (): void => dxPointerUp.off(this.scrollRef, { namespace });
   }
 
+  @Method()
+  moveTo(location): void {
+    const { visibilityMode, direction } = this.props;
+
+    if (visibilityMode === 'never') {
+      return;
+    }
+
+    let position = location;
+    const prop = direction === DIRECTION_HORIZONTAL ? 'left' : 'top';
+
+    if (isPlainObject(location)) {
+      position = location[prop] || 0;
+    }
+
+    const scrollBarLocation = {};
+    scrollBarLocation[prop] = this.calculateScrollBarPosition(position);
+    move(this.scrollRef, scrollBarLocation);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  calculateScrollBarPosition(location): number {
+    return -location * 1; // TODO: this._thumbRatio;
+  }
+
   private feedbackOn(): void {
     this.active = true;
   }
@@ -110,16 +145,17 @@ export class Scrollbar extends JSXComponent<ScrollbarProps>() {
 
     return {
       ...style,
-      display: this.props.needScrollbar ? '' : 'none',
+      display: this.needScrollbar() ? '' : 'none',
       [`${this.getDimension()}`]: THUMB_MIN_SIZE,
     };
   }
 
-  get scrollClasses(): string {
-    return combineClasses({
-      [SCROLLABLE_SCROLL_CLASS]: true,
-      'dx-state-invisible': !this.props.visible,
-    });
+  private isHidden(): boolean {
+    return this.props.visibilityMode === 'never';
+  }
+
+  private needScrollbar(): boolean {
+    return !this.isHidden() && (this.baseContainerToContentRatio < 1);
   }
 
   private getDimension(): string {
