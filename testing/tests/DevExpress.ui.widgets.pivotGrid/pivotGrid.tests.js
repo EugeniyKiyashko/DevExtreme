@@ -3422,9 +3422,6 @@ QUnit.module('dxPivotGrid', {
         const setViewportPosition = sinon.spy(pivotGrid._dataController, 'setViewportPosition');
         const updateWindowScrollPosition = sinon.spy(pivotGrid._dataController, 'updateWindowScrollPosition');
 
-        scrollable.on('scroll', assertFunction);
-        scrollable.scrollTo({ left: 10, top: 1 });
-
         function assertFunction() {
             assert.deepEqual(setViewportPosition.lastCall.args, [10, 7]);
 
@@ -3432,6 +3429,9 @@ QUnit.module('dxPivotGrid', {
             scrollable.off('scroll', assertFunction);
             done();
         }
+
+        scrollable.on('scroll', assertFunction);
+        scrollable.scrollTo({ left: 10, top: 1 });
     });
 
     QUnit.test('T243287. Scroll position after updateDimensions', function(assert) {
