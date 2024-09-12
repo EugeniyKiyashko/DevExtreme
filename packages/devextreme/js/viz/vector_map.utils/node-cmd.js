@@ -20,20 +20,12 @@ function processFile(file, options, callback) {
             if(!options.isJSON) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
-
-            const outputDir = path.resolve(options.output || path.dirname(file));
-            const safePath = path.resolve(outputDir, options.processFileName(name + (options.isJSON ? '.json' : '.js')));
-
-            const relativePath = path.relative(outputDir, safePath);
-            if(relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-                options.error('Attempt to write outside the allowed directory');
-                return callback();
-            }
-
-            fs.writeFile(safePath, content, function(e) {
-                e && options.error('  ' + e.message);
-                callback();
-            });
+            fs.writeFile(
+                path.resolve(options.output || path.dirname(file), options.processFileName(name + (options.isJSON ? '.json' : '.js'))),
+                content, function(e) {
+                    e && options.error('  ' + e.message);
+                    callback();
+                });
         } else {
             callback();
         }
