@@ -1,45 +1,45 @@
 /* eslint-disable no-console, no-undef, no-var, one-var, import/no-commonjs*/
 
 var path = require('path');
-const sanitizeFilename = require('sanitize-filename');
+// const sanitizeFilename = require('sanitize-filename');
 
-function normalizeJsName(value) {
-    return value.trim().replace('-', '_').replace(' ', '_');
-}
+// function normalizeJsName(value) {
+//     return value.trim().replace('-', '_').replace(' ', '_');
+// }
 
 function processFile(file, options, callback) {
-    const sanitizedFile = sanitizeFilename(file);
-    var name = path.basename(sanitizedFile, path.extname(sanitizedFile));
-    options.info('%s: started', name);
-    parse(sanitizedFile, { precision: options.precision }, function(shapeData, errors) {
-        var content;
-        options.info('%s: finished', name);
-        errors && errors.forEach(function(e) {
-            options.error('  ' + e);
-        });
-        if(shapeData) {
-            content = JSON.stringify(options.processData(shapeData), null, options.isDebug && 4);
-            if(!options.isJSON) {
-                content = options.processFileContent(content, normalizeJsName(name));
-            }
+    // const sanitizedFile = sanitizeFilename(file);
+    // var name = path.basename(sanitizedFile, path.extname(sanitizedFile));
+    // options.info('%s: started', name);
+    // parse(sanitizedFile, { precision: options.precision }, function(shapeData, errors) {
+    //     var content;
+    //     options.info('%s: finished', name);
+    //     errors && errors.forEach(function(e) {
+    //         options.error('  ' + e);
+    //     });
+    //     if(shapeData) {
+    //         content = JSON.stringify(options.processData(shapeData), null, options.isDebug && 4);
+    //         if(!options.isJSON) {
+    //             content = options.processFileContent(content, normalizeJsName(name));
+    //         }
 
-            const outputDir = path.resolve(options.output || path.dirname(sanitizedFile));
-            const safePath = path.resolve(outputDir, options.processFileName(name + (options.isJSON ? '.json' : '.js')));
+    //         const outputDir = path.resolve(options.output || path.dirname(sanitizedFile));
+    //         const safePath = path.resolve(outputDir, options.processFileName(name + (options.isJSON ? '.json' : '.js')));
 
-            const relativePath = path.relative(outputDir, safePath);
-            if(relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-                options.error('Attempt to write outside the allowed directory');
-                return callback();
-            }
+    //         const relativePath = path.relative(outputDir, safePath);
+    //         if(relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    //             options.error('Attempt to write outside the allowed directory');
+    //             return callback();
+    //         }
 
-            fs.writeFile(safePath, content, function(e) {
-                e && options.error('  ' + e.message);
-                callback();
-            });
-        } else {
-            callback();
-        }
-    });
+    //         fs.writeFile(safePath, content, function(e) {
+    //             e && options.error('  ' + e.message);
+    //             callback();
+    //         });
+    //     } else {
+    //         callback();
+    //     }
+    // });
 }
 
 function collectFiles(dir, done) {
