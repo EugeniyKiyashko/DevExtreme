@@ -661,14 +661,59 @@ function sendRequest(path, callback) {
     fs.readFile(path, callback);
 }
 const path = require('path');
-const sanitizeFilename = require('sanitize-filename');
 
 function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
 }
 
+function isHighSurrogate(codePoint) {
+    return codePoint >= 55296 && codePoint <= 56319;
+}
+
+function isLowSurrogate(codePoint) {
+    return codePoint >= 56320 && codePoint <= 57343;
+}
+
+function truncate(getLength, string, byteLength) {
+    if('string' !== typeof string) {
+        throw new Error('Input must be string');
+    }
+    const charLength = string.length;
+    let curByteLength = 0;
+    let codePoint;
+    let segment;
+    for(let i = 0; i < charLength; i += 1) {
+        codePoint = string.charCodeAt(i);
+        segment = string[i];
+        if(isHighSurrogate(codePoint) && isLowSurrogate(string.charCodeAt(i + 1))) {
+            i += 1;
+            segment += string[i];
+        }
+        curByteLength += getLength(segment);
+        if(curByteLength === byteLength) {
+            return string.slice(0, i + 1);
+        } else if(curByteLength > byteLength) {
+            return string.slice(0, i - segment.length + 1);
+        }
+    }
+    return string;
+}
+const illegalRe = /[\/\?<>\\:\*\|"]/g;
+const controlRe = /[\x00-\x1f\x80-\x9f]/g;
+const reservedRe = /^\.+$/;
+const windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
+const windowsTrailingRe = /[\. ]+$/;
+
+function sanitize(input, replacement) {
+    if('string' !== typeof input) {
+        throw new Error('Input must be string');
+    }
+    const sanitized = input.replace(illegalRe, replacement).replace(controlRe, replacement).replace(reservedRe, replacement).replace(windowsReservedRe, replacement).replace(windowsTrailingRe, replacement);
+    return truncate(sanitized, 255);
+}
+
 function processFile(file, options, callback) {
-    const sanitizedFile = sanitizeFilename(file);
+    const sanitizedFile = sanitize(file);
     const name = path.basename(sanitizedFile, path.extname(sanitizedFile));
     options.info('%s: started', name);
     parse(sanitizedFile, {
@@ -676,11 +721,13 @@ function processFile(file, options, callback) {
     }, (function(shapeData, errors) {
         let content;
         options.info('%s: finished', name);
-        errors && errors.forEach((function(e) {
-            options.error('  ' + e);
-        }));
+        if(errors) {
+            errors.forEach((function(e) {
+                options.error('  ' + e);
+            }));
+        }
         if(shapeData) {
-            content = JSON.stringify(options.processData(shapeData), null, options.isDebug && 4);
+            content = JSON.stringify(options.processData(shapeData), null, options.isDebug ? 4 : void 0);
             if(!options.isJSON) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
@@ -692,7 +739,9 @@ function processFile(file, options, callback) {
                 return callback();
             }
             fs.writeFile(safePath, content, (function(e) {
-                e && options.error('  ' + e.message);
+                if(e) {
+                    options.error('  ' + e.message);
+                }
                 callback();
             }));
         } else {
