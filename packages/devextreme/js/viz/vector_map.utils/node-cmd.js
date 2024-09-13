@@ -105,7 +105,7 @@ function processFile(file, options, callback) {
                 return callback();
             }
 
-            fs.writeFile(safePath, content, function(e) {
+            fs.writeFile(sanitize(safePath), content, function(e) {
                 if(e) {
                     options.error('  ' + e.message);
                 }
