@@ -692,7 +692,7 @@ function sanitize(input, replacement) {
     var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
     var reservedRegExp = /^\.+$/;
     var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
-    // // eslint-disable-next-line no-useless-escape
+    // // eslint-disable-next-line no-useless-escape, no-useless-escape, no-useless-escape
     var windowsTrailingRegExp = /[\. ]+$/;
 
     console.log(input, illegalRegExp);
@@ -707,14 +707,14 @@ function sanitize(input, replacement) {
     return result;
 }
 
-// function sanitizeInput(input, options) {
-//     var replacement = (options && options.replacement) || '';
-//     var output = sanitize(input, replacement);
-//     if(replacement === '') {
-//         return output;
-//     }
-//     return sanitize(output, '');
-// }
+function sanitizeInput(input, options) {
+    var replacement = (options && options.replacement) || '';
+    var output = sanitize(input, replacement);
+    if(replacement === '') {
+        return output;
+    }
+    return sanitize(output, '');
+}
 
 function processFile(file, options, callback) {
     var name = path.basename(file, path.extname(file));
@@ -731,7 +731,7 @@ function processFile(file, options, callback) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
             console.log(options.output);
-            var sanitizedInput = sanitize(options.output);
+            var sanitizedInput = sanitizeInput(options.output);
             console.log('sanitazedInput', sanitizedInput);
             console.log('sanitizedInput || path.dirname(file)', sanitizedInput || path.dirname(file));
             console.log('options.processFileName(name + (options.isJSON ', options.processFileName(name + (options.isJSON ? '.json' : '.js')));
