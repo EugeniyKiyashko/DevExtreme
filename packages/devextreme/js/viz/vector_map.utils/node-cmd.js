@@ -1,7 +1,7 @@
 /* eslint-disable no-console, no-undef, no-var, one-var, import/no-commonjs*/
 
 const path = require('path');
-// const sanitizeFilename = require('sanitize-filename');
+const sanitizeFilename = require('sanitize-filename');
 
 function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
@@ -9,123 +9,89 @@ function normalizeJsName(value) {
 
 // var truncate = require('truncate-utf8-bytes');
 
-function isHighSurrogate(codePoint) {
-    return codePoint >= 0xd800 && codePoint <= 0xdbff;
-}
+// function isHighSurrogate(codePoint) {
+//     return codePoint >= 0xd800 && codePoint <= 0xdbff;
+// }
 
-function isLowSurrogate(codePoint) {
-    return codePoint >= 0xdc00 && codePoint <= 0xdfff;
-}
+// function isLowSurrogate(codePoint) {
+//     return codePoint >= 0xdc00 && codePoint <= 0xdfff;
+// }
 
 // Truncate string by size in bytes
-function truncate(getLength, string, byteLength) {
-    if(typeof string !== 'string') {
-        throw new Error('Input must be string');
-    }
+// function truncate(getLength, string, byteLength) {
+//     if(typeof string !== 'string') {
+//         console.log('Input must be string');
+//         // throw new Error('Input must be string');
+//     }
 
-    var charLength = string.length;
-    var curByteLength = 0;
-    var codePoint;
-    var segment;
+//     var charLength = string.length;
+//     var curByteLength = 0;
+//     var codePoint;
+//     var segment;
 
-    for(var i = 0; i < charLength; i += 1) {
-        codePoint = string.charCodeAt(i);
-        segment = string[i];
+//     for(var i = 0; i < charLength; i += 1) {
+//         codePoint = string.charCodeAt(i);
+//         segment = string[i];
 
-        if(isHighSurrogate(codePoint) && isLowSurrogate(string.charCodeAt(i + 1))) {
-            i += 1;
-            segment += string[i];
-        }
+//         if(isHighSurrogate(codePoint) && isLowSurrogate(string.charCodeAt(i + 1))) {
+//             i += 1;
+//             segment += string[i];
+//         }
 
-        curByteLength += getLength(segment);
+//         curByteLength += getLength(segment);
 
-        if(curByteLength === byteLength) {
-            return string.slice(0, i + 1);
-        } else if(curByteLength > byteLength) {
-            return string.slice(0, i - segment.length + 1);
-        }
-    }
+//         if(curByteLength === byteLength) {
+//             return string.slice(0, i + 1);
+//         } else if(curByteLength > byteLength) {
+//             return string.slice(0, i - segment.length + 1);
+//         }
+//     }
 
-    return string;
-}
+//     return string;
+// }
 
 
-// eslint-disable-next-line no-useless-escape
-var illegalRe = /[\/\?<>\\:\*\|"]/g;
-// eslint-disable-next-line no-control-regex
-var controlRe = /[\x00-\x1f\x80-\x9f]/g;
-var reservedRe = /^\.+$/;
-var windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
-// eslint-disable-next-line no-useless-escape
-var windowsTrailingRe = /[\. ]+$/;
+// // eslint-disable-next-line no-useless-escape
+// var illegalRe = /[\/\?<>\\:\*\|"]/g;
+// // eslint-disable-next-line no-control-regex
+// var controlRe = /[\x00-\x1f\x80-\x9f]/g;
+// var reservedRe = /^\.+$/;
+// var windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
+// // eslint-disable-next-line no-useless-escape
+// var windowsTrailingRe = /[\. ]+$/;
 
-function sanitize(input, replacement) {
-    if(typeof input !== 'string') {
-        throw new Error('Input must be string');
-    }
-    var sanitized = input
-        .replace(illegalRe, replacement)
-        .replace(controlRe, replacement)
-        .replace(reservedRe, replacement)
-        .replace(windowsReservedRe, replacement)
-        .replace(windowsTrailingRe, replacement);
-    return truncate(sanitized, 255);
-}
+// function sanitize(input, replacement) {
+//     if(typeof input !== 'string') {
+//         throw new Error('Input must be string');
+//     }
+//     var sanitized = input
+//         .replace(illegalRe, replacement)
+//         .replace(controlRe, replacement)
+//         .replace(reservedRe, replacement)
+//         .replace(windowsReservedRe, replacement)
+//         .replace(windowsTrailingRe, replacement);
+//     return truncate(sanitized, 255);
+// }
 
 function processFile(file, options, callback) {
-    const sanitizedFile = sanitize(file);
-    const name = path.basename(sanitizedFile, path.extname(sanitizedFile));
+    // const sanitizedFile = sanitize(file);
+    // const name = path.basename(sanitizedFile, path.extname(sanitizedFile));
 
-    options.info('%s: started', name);
-
-    parse(sanitizedFile, { precision: options.precision }, function(shapeData, errors) {
-        let content;
-        options.info('%s: finished', name);
-
-        if(errors) {
-            errors.forEach(function(e) {
-                options.error('  ' + e);
-            });
-        }
-
-        if(shapeData) {
-            content = JSON.stringify(options.processData(shapeData), null, options.isDebug ? 4 : undefined);
-
-            if(!options.isJSON) {
-                content = options.processFileContent(content, normalizeJsName(name));
-            }
-
-            const outputDir = path.resolve(options.output || path.dirname(sanitizedFile));
-            const safePath = path.resolve(outputDir, options.processFileName(name + (options.isJSON ? '.json' : '.js')));
-
-            // Validate that the safePath is within the outputDir
-            const relativePath = path.relative(outputDir, safePath);
-            if(relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-                options.error('Attempt to write outside the allowed directory');
-                return callback();
-            }
-
-            fs.writeFile(sanitize(safePath), content, function(e) {
-                if(e) {
-                    options.error('  ' + e.message);
-                }
-                callback();
-            });
-        } else {
-            callback();
-        }
-    });
-    // const sanitizedFile = sanitizeFilename(file);
-    // var name = path.basename(sanitizedFile, path.extname(sanitizedFile));
     // options.info('%s: started', name);
+
     // parse(sanitizedFile, { precision: options.precision }, function(shapeData, errors) {
-    //     var content;
+    //     let content;
     //     options.info('%s: finished', name);
-    //     errors && errors.forEach(function(e) {
-    //         options.error('  ' + e);
-    //     });
+
+    //     if(errors) {
+    //         errors.forEach(function(e) {
+    //             options.error('  ' + e);
+    //         });
+    //     }
+
     //     if(shapeData) {
-    //         content = JSON.stringify(options.processData(shapeData), null, options.isDebug && 4);
+    //         content = JSON.stringify(options.processData(shapeData), null, options.isDebug ? 4 : undefined);
+
     //         if(!options.isJSON) {
     //             content = options.processFileContent(content, normalizeJsName(name));
     //         }
@@ -133,20 +99,55 @@ function processFile(file, options, callback) {
     //         const outputDir = path.resolve(options.output || path.dirname(sanitizedFile));
     //         const safePath = path.resolve(outputDir, options.processFileName(name + (options.isJSON ? '.json' : '.js')));
 
+    //         // Validate that the safePath is within the outputDir
     //         const relativePath = path.relative(outputDir, safePath);
     //         if(relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
     //             options.error('Attempt to write outside the allowed directory');
     //             return callback();
     //         }
 
-    //         fs.writeFile(safePath, content, function(e) {
-    //             e && options.error('  ' + e.message);
+    //         fs.writeFile(sanitizeFilename(safePath), content, function(e) {
+    //             if(e) {
+    //                 options.error('  ' + e.message);
+    //             }
     //             callback();
     //         });
     //     } else {
     //         callback();
     //     }
     // });
+    const sanitizedFile = sanitizeFilename(file);
+    var name = path.basename(sanitizedFile, path.extname(sanitizedFile));
+    options.info('%s: started', name);
+    parse(sanitizedFile, { precision: options.precision }, function(shapeData, errors) {
+        var content;
+        options.info('%s: finished', name);
+        errors && errors.forEach(function(e) {
+            options.error('  ' + e);
+        });
+        if(shapeData) {
+            content = JSON.stringify(options.processData(shapeData), null, options.isDebug && 4);
+            if(!options.isJSON) {
+                content = options.processFileContent(content, normalizeJsName(name));
+            }
+
+            const outputDir = path.resolve(options.output || path.dirname(sanitizedFile));
+            const safePath = path.resolve(outputDir, options.processFileName(name + (options.isJSON ? '.json' : '.js')));
+
+            const relativePath = path.relative(outputDir, safePath);
+            if(relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+                options.error('Attempt to write outside the allowed directory');
+                return callback();
+            }
+
+            fs.writeFile(sanitizeFilename(safePath), content, function(e) {
+                e && options.error('  ' + e.message);
+                callback();
+            });
+        } else {
+            callback();
+        }
+    });
 }
 
 function collectFiles(dir, done) {
