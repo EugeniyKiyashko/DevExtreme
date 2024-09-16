@@ -1,4 +1,4 @@
-/* !
+/*!
 * DevExtreme (dx.vectormaputils.node.js)
 * Version: 24.2.0
 * Build date: Mon Sep 16 2024
@@ -6,7 +6,7 @@
 * Copyright (c) 2012 - 2024 Developer Express Inc. ALL RIGHTS RESERVED
 * Read about DevExtreme licensing here: https://js.devexpress.com/Licensing/
 */
-
+"use strict";
 
 /* eslint-disable no-undef, no-var, one-var, import/no-commonjs*/
 
@@ -680,6 +680,7 @@ function sendRequest(path, callback) {
 /* eslint-disable no-console, no-undef, no-var, one-var, import/no-commonjs*/
 
 var path = require('path');
+var sanitize = require('sanitize-filename');
 
 function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
@@ -699,8 +700,12 @@ function processFile(file, options, callback) {
             if(!options.isJSON) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
+
+            var sanitizedInput = sanitize(path.normalize(options.output));
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), options.processFileName(name + (options.isJSON ? '.json' : '.js')));
+
             fs.writeFile(
-                path.resolve(path.normalize(options.output) || path.dirname(file), options.processFileName(name + (options.isJSON ? '.json' : '.js'))),
+                outputPath,
                 content, function(e) {
                     e && options.error('  ' + e.message);
                     callback();
