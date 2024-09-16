@@ -1,7 +1,6 @@
 /* eslint-disable no-console, no-undef, no-var, one-var, import/no-commonjs*/
 
 var path = require('path');
-var sanitize = require('sanitize-filename');
 
 function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
@@ -22,8 +21,8 @@ function processFile(file, options, callback) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
 
-            var sanitizedInput = sanitize(path.normalize(options.output));
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), options.processFileName(name + (options.isJSON ? '.json' : '.js')));
+            var sanitizedInput = path.normalize(options.output);
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), 'usa' + (options.isJSON ? '.json' : '.js'));
 
             fs.writeFile(
                 outputPath,
