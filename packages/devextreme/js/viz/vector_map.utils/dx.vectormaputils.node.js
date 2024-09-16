@@ -685,6 +685,37 @@ function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
 }
 
+function sanitize(input, replacement) {
+    // eslint-disable-next-line no-useless-escape
+    var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
+    // eslint-disable-next-line no-control-regex
+    var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
+    var reservedRegExp = /^\.+$/;
+    var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
+    // // eslint-disable-next-line no-useless-escape
+    var windowsTrailingRegExp = /[\. ]+$/;
+
+    console.log(input, illegalRegExp);
+
+    var result = input
+        .replace(illegalRegExp, replacement)
+        .replace(controlRegExp, replacement)
+        .replace(reservedRegExp, replacement)
+        .replace(windowsReservedRegExp, replacement)
+        .replace(windowsTrailingRegExp, replacement);
+
+    return result;
+}
+
+// function sanitizeInput(input, options) {
+//     var replacement = (options && options.replacement) || '';
+//     var output = sanitize(input, replacement);
+//     if(replacement === '') {
+//         return output;
+//     }
+//     return sanitize(output, '');
+// }
+
 function processFile(file, options, callback) {
     var name = path.basename(file, path.extname(file));
     options.info('%s: started', name);
@@ -699,9 +730,12 @@ function processFile(file, options, callback) {
             if(!options.isJSON) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
-
-            var sanitizedInput = path.normalize(options.output);
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), 'usa' + (options.isJSON ? '.json' : '.js'));
+            console.log(options.output);
+            var sanitizedInput = sanitize(options.output);
+            console.log('sanitazedInput', sanitizedInput);
+            console.log('sanitizedInput || path.dirname(file)', sanitizedInput || path.dirname(file));
+            console.log('options.processFileName(name + (options.isJSON ', options.processFileName(name + (options.isJSON ? '.json' : '.js')));
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), options.processFileName(name + (options.isJSON ? '.json' : '.js')));
 
             fs.writeFile(
                 outputPath,
