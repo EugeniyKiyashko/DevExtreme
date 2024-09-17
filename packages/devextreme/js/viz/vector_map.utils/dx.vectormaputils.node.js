@@ -1,4 +1,4 @@
-/* !
+/*!
 * DevExtreme (dx.vectormaputils.node.js)
 * Version: 24.2.0
 * Build date: Tue Sep 17 2024
@@ -6,7 +6,7 @@
 * Copyright (c) 2012 - 2024 Developer Express Inc. ALL RIGHTS RESERVED
 * Read about DevExtreme licensing here: https://js.devexpress.com/Licensing/
 */
-
+"use strict";
 
 /* eslint-disable no-undef, no-var, one-var, import/no-commonjs*/
 
@@ -687,22 +687,24 @@ function normalizeJsName(value) {
 
 function sanitize(input, replacement) {
     // eslint-disable-next-line no-useless-escape
-    var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
+    // var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
     // eslint-disable-next-line no-control-regex
     var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
-    var reservedRegExp = /^\.+$/;
+    // var reservedRegExp = /^\.+$/;
     var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
     // // eslint-disable-next-line no-useless-escape, no-useless-escape, no-useless-escape
     var windowsTrailingRegExp = /[\. ]+$/;
 
-    console.log(input, illegalRegExp);
+    // console.log(input, illegalRegExp);
 
     var result = input
-        .replace(illegalRegExp, replacement)
+        // .replace(illegalRegExp, replacement)
         .replace(controlRegExp, replacement)
-        .replace(reservedRegExp, replacement)
+        // .replace(reservedRegExp, replacement)
         .replace(windowsReservedRegExp, replacement)
         .replace(windowsTrailingRegExp, replacement);
+
+    console.log('111', input, result);
 
     return result;
 }
@@ -735,7 +737,7 @@ function processFile(file, options, callback) {
             console.log('sanitazedInput', sanitizedInput);
             console.log('sanitizedInput || path.dirname(file)', sanitizedInput || path.dirname(file));
             console.log('options.processFileName(name + (options.isJSON ', options.processFileName(name + (options.isJSON ? '.json' : '.js')));
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), options.processFileName(name + (options.isJSON ? '.json' : '.js')));
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
 
             fs.writeFile(
                 outputPath,

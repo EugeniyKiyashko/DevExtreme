@@ -30,7 +30,7 @@ gulp.task('vectormap-utils', function() {
     );
 });
 
-gulp.task('vectormap-data', gulp.series('vectormap-utils', function(done) {
+gulp.task('vectormap-data', gulp.series('vectormap-utils', function() {
     const stream = merge();
     const processFiles = require(path.join('../..', VECTORMAP_UTILS_RESULT_PATH, 'dx.vectormaputils.node.js')).processFiles;
 
@@ -55,8 +55,6 @@ gulp.task('vectormap-data', gulp.series('vectormap-utils', function(done) {
                     .pipe(gulp.dest(VECTORMAP_DATA_RESULT_PATH))
             );
         });
-
-        done();
     });
     return stream;
 }));
