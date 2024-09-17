@@ -8,22 +8,24 @@ function normalizeJsName(value) {
 
 function sanitize(input, replacement) {
     // eslint-disable-next-line no-useless-escape
-    var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
+    // var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
     // eslint-disable-next-line no-control-regex
     var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
-    var reservedRegExp = /^\.+$/;
+    // var reservedRegExp = /^\.+$/;
     var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
     // // eslint-disable-next-line no-useless-escape, no-useless-escape, no-useless-escape
     var windowsTrailingRegExp = /[\. ]+$/;
 
-    console.log(input, illegalRegExp);
+    // console.log(input, illegalRegExp);
 
     var result = input
-        .replace(illegalRegExp, replacement)
+        // .replace(illegalRegExp, replacement)
         .replace(controlRegExp, replacement)
-        .replace(reservedRegExp, replacement)
+        // .replace(reservedRegExp, replacement)
         .replace(windowsReservedRegExp, replacement)
         .replace(windowsTrailingRegExp, replacement);
+
+    console.log('111', input, result);
 
     return result;
 }
