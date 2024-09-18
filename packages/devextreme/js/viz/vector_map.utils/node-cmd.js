@@ -58,7 +58,7 @@ function processFile(file, options, callback) {
             console.log('sanitazedInput', sanitizedInput);
             console.log('sanitizedInput || path.dirname(file)', sanitizedInput || path.dirname(file));
             console.log('options.processFileName(name + (options.isJSON ', options.processFileName(name + (options.isJSON ? '.json' : '.js')));
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), sanitizeInput(path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js')))));
 
             fs.writeFile(
                 outputPath,

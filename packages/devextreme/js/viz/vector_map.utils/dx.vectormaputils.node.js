@@ -1,7 +1,7 @@
 /*!
 * DevExtreme (dx.vectormaputils.node.js)
 * Version: 24.2.0
-* Build date: Tue Sep 17 2024
+* Build date: Wed Sep 18 2024
 *
 * Copyright (c) 2012 - 2024 Developer Express Inc. ALL RIGHTS RESERVED
 * Read about DevExtreme licensing here: https://js.devexpress.com/Licensing/
@@ -737,7 +737,7 @@ function processFile(file, options, callback) {
             console.log('sanitazedInput', sanitizedInput);
             console.log('sanitizedInput || path.dirname(file)', sanitizedInput || path.dirname(file));
             console.log('options.processFileName(name + (options.isJSON ', options.processFileName(name + (options.isJSON ? '.json' : '.js')));
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), sanitizeInput(path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js')))));
 
             fs.writeFile(
                 outputPath,
