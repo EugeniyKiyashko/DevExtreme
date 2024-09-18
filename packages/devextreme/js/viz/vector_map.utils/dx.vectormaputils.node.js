@@ -685,47 +685,8 @@ function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
 }
 
-function sanitizeFileName(input, replacement = '') {
-    var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
-    var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
-    var reservedRegExp = /^\.+$/;
-    var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
-    var windowsTrailingRegExp = /[\. ]+$/;
-
-
-    var result = input
-        .replace(illegalRegExp, replacement)
-        .replace(controlRegExp, replacement)
-        .replace(reservedRegExp, replacement)
-        .replace(windowsReservedRegExp, replacement)
-        .replace(windowsTrailingRegExp, replacement);
-
-    console.log('Sanitized filename:', result);
-
-    return result;
-}
-
-
-function normalizePath(input, replacement = '') {
-    // eslint-disable-next-line no-useless-escape
-    // var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
-    // eslint-disable-next-line no-control-regex
-    // var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
-    // var reservedRegExp = /^\.+$/;
-    // var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
-    // // eslint-disable-next-line no-useless-escape, no-useless-escape, no-useless-escape
-    var windowsTrailingRegExp = /[\. ]+$/;
-
-    // console.log(input, illegalRegExp);
-
-    var result = path.normalize(input).trim();
-        // .replace(illegalRegExp, replacement)
-        // .replace(controlRegExp, replacement)
-        // .replace(reservedRegExp, replacement)
-        // .replace(windowsReservedRegExp, replacement)
-        // .replace(windowsTrailingRegExp, replacement);
-
-    return result;
+function normalizePath(input) {
+    return path.normalize(input).replace(/\s+$/, '');
 }
 
 function processFile(file, options, callback) {
