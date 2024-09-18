@@ -686,15 +686,14 @@ function normalizeJsName(value) {
 }
 
 function normalizePath(input) {
-    return path.normalize(input).replace(/\s+$/, '');
+    return path.normalize(input).replace(/[\. ]+$/, '');
 }
 
 function processFile(file, options, callback) {
     var name = path.basename(file, path.extname(file));
     options.info('%s: started', name);
     parse(file, { precision: options.precision }, function(shapeData, errors) {
-        var content;
-        options.info('%s: finished', name);
+        var content;        options.info('%s: finished', name);
         errors && errors.forEach(function(e) {
             options.error('  ' + e);
         });
