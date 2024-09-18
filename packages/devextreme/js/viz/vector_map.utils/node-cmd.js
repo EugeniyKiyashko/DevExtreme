@@ -6,7 +6,28 @@ function normalizeJsName(value) {
     return value.trim().replace('-', '_').replace(' ', '_');
 }
 
-function sanitize(input, replacement) {
+function sanitizeFileName(input, replacement = '') {
+    var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
+    var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
+    var reservedRegExp = /^\.+$/;
+    var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
+    var windowsTrailingRegExp = /[\. ]+$/;
+
+
+    var result = input
+        .replace(illegalRegExp, replacement)
+        .replace(controlRegExp, replacement)
+        .replace(reservedRegExp, replacement)
+        .replace(windowsReservedRegExp, replacement)
+        .replace(windowsTrailingRegExp, replacement);
+
+    console.log('Sanitized filename:', result);
+
+    return result;
+}
+
+
+function normalizePath(input, replacement) {
     // eslint-disable-next-line no-useless-escape
     // var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
     // eslint-disable-next-line no-control-regex
@@ -18,7 +39,7 @@ function sanitize(input, replacement) {
 
     // console.log(input, illegalRegExp);
 
-    var result = path.normalize(input);
+    var result = path.normalize(input).replace('', '');
         // .replace(illegalRegExp, replacement)
         // .replace(controlRegExp, replacement)
         // .replace(reservedRegExp, replacement)
@@ -28,15 +49,6 @@ function sanitize(input, replacement) {
     console.log('111', input, result);
 
     return result;
-}
-
-function sanitizeInput(input, options) {
-    var replacement = (options && options.replacement) || '';
-    var output = sanitize(input, replacement);
-    if(replacement === '') {
-        return output;
-    }
-    return sanitize(output, '');
 }
 
 function processFile(file, options, callback) {
@@ -53,9 +65,20 @@ function processFile(file, options, callback) {
             if(!options.isJSON) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
-            console.log(options.output);
-            var sanitizedInput = sanitizeInput(options.output);
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), sanitizeInput(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
+
+            var sanitizedPath = normalizePath(options.output);
+            const baseDir = sanitizedPath || path.dirname(file);
+
+            // 
+            // function isPathSafe(baseDir, userInputPath) {
+            //     // Resolve the input path relative to the base directory
+            //     const resolvedPath = path.resolve(baseDir, userInputPath);
+            
+            //     // Ensure the resolved path is still within the base directory (prevents traversal)
+            //     return resolvedPath.startsWith(baseDir);
+            // }
+            //
+            var outputPath = path.resolve(baseDir, sanitizeFileName(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
 
             fs.writeFile(
                 outputPath,
@@ -70,7 +93,7 @@ function processFile(file, options, callback) {
 }
 
 function collectFiles(dir, done) {
-    var input = sanitizeInput(path.resolve(dir || ''));
+    var input = normalizePath(path.resolve(dir || ''));
 
     fs.stat(input, function(e, stat) {
         if(e) {
