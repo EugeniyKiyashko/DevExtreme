@@ -39,14 +39,12 @@ function normalizePath(input, replacement = '') {
 
     // console.log(input, illegalRegExp);
 
-    var result = path.normalize(input)
+    var result = path.normalize(input).trim();
         // .replace(illegalRegExp, replacement)
         // .replace(controlRegExp, replacement)
         // .replace(reservedRegExp, replacement)
         // .replace(windowsReservedRegExp, replacement)
-        .replace(windowsTrailingRegExp, replacement);
-
-    console.log('111', input, result);
+        // .replace(windowsTrailingRegExp, replacement);
 
     return result;
 }
@@ -66,19 +64,10 @@ function processFile(file, options, callback) {
                 content = options.processFileContent(content, normalizeJsName(name));
             }
 
-            var sanitizedPath = normalizePath(options.output);
-            const baseDir = sanitizedPath || path.dirname(file);
+            const baseDir = normalizePath(options.output) || path.dirname(file);
+            const fileName = normalizePath(options.processFileName(name + (options.isJSON ? '.json' : '.js')))
 
-            // 
-            // function isPathSafe(baseDir, userInputPath) {
-            //     // Resolve the input path relative to the base directory
-            //     const resolvedPath = path.resolve(baseDir, userInputPath);
-            
-            //     // Ensure the resolved path is still within the base directory (prevents traversal)
-            //     return resolvedPath.startsWith(baseDir);
-            // }
-            //
-            var outputPath = path.resolve(baseDir, sanitizeFileName(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
+            var outputPath = path.resolve(baseDir, fileName);
 
             fs.writeFile(
                 outputPath,
