@@ -27,7 +27,7 @@ function sanitizeFileName(input, replacement = '') {
 }
 
 
-function normalizePath(input, replacement) {
+function normalizePath(input, replacement = '') {
     // eslint-disable-next-line no-useless-escape
     // var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
     // eslint-disable-next-line no-control-regex
