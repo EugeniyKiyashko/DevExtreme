@@ -689,7 +689,7 @@ function sanitize(input, replacement) {
     // eslint-disable-next-line no-useless-escape
     // var illegalRegExp = /[\/\?<>\\:\*\|"]/g;
     // eslint-disable-next-line no-control-regex
-    var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
+    // var controlRegExp = /[\x00-\x1f\x80-\x9f]/g;
     // var reservedRegExp = /^\.+$/;
     var windowsReservedRegExp = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
     // // eslint-disable-next-line no-useless-escape, no-useless-escape, no-useless-escape
@@ -699,7 +699,7 @@ function sanitize(input, replacement) {
 
     var result = input
         // .replace(illegalRegExp, replacement)
-        .replace(controlRegExp, replacement)
+        // .replace(controlRegExp, replacement)
         // .replace(reservedRegExp, replacement)
         .replace(windowsReservedRegExp, replacement)
         .replace(windowsTrailingRegExp, replacement);
@@ -734,9 +734,6 @@ function processFile(file, options, callback) {
             }
             console.log(options.output);
             var sanitizedInput = sanitizeInput(options.output);
-            console.log('sanitazedInput', sanitizedInput);
-            console.log('sanitizedInput || path.dirname(file)', sanitizedInput || path.dirname(file));
-            console.log('options.processFileName(name + (options.isJSON ', options.processFileName(name + (options.isJSON ? '.json' : '.js')));
             var outputPath = path.resolve(sanitizedInput || path.dirname(file), sanitizeInput(path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js')))));
 
             fs.writeFile(
