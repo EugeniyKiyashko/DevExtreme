@@ -718,12 +718,12 @@ function normalizePath(input, replacement) {
 
     // console.log(input, illegalRegExp);
 
-    var result = path.normalize(input).replace('', '');
+    var result = path.normalize(input)
         // .replace(illegalRegExp, replacement)
         // .replace(controlRegExp, replacement)
         // .replace(reservedRegExp, replacement)
         // .replace(windowsReservedRegExp, replacement)
-        // .replace(windowsTrailingRegExp, replacement);
+        .replace(windowsTrailingRegExp, replacement);
 
     console.log('111', input, result);
 
