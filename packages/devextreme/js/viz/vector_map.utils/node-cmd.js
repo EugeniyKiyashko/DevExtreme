@@ -18,12 +18,12 @@ function sanitize(input, replacement) {
 
     // console.log(input, illegalRegExp);
 
-    var result = input
+    var result = path.normalize(input);
         // .replace(illegalRegExp, replacement)
         // .replace(controlRegExp, replacement)
         // .replace(reservedRegExp, replacement)
         // .replace(windowsReservedRegExp, replacement)
-        .replace(windowsTrailingRegExp, replacement);
+        // .replace(windowsTrailingRegExp, replacement);
 
     console.log('111', input, result);
 
@@ -55,7 +55,7 @@ function processFile(file, options, callback) {
             }
             console.log(options.output);
             var sanitizedInput = sanitizeInput(options.output);
-            var outputPath = path.resolve(sanitizedInput || path.dirname(file), sanitizeInput(path.normalize(options.processFileName(name + (options.isJSON ? '.json' : '.js')))));
+            var outputPath = path.resolve(sanitizedInput || path.dirname(file), sanitizeInput(options.processFileName(name + (options.isJSON ? '.json' : '.js'))));
 
             fs.writeFile(
                 outputPath,
