@@ -104,6 +104,14 @@ const HierarchicalCollectionWidget = CollectionWidget.inherit({
             .append(textContainer);
     },
 
+    _clickByLink(link) {
+        link.addEventListener('click', (e) => {
+            e.stopPropagation();
+        }, { once: true });
+
+        link.click();
+    },
+
     _getIconContainer: function(itemData) {
         return itemData.icon ? getImageContainer(itemData.icon) : undefined;
     },

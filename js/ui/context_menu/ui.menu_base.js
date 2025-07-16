@@ -555,11 +555,19 @@ class MenuBase extends HierarchicalCollectionWidget {
         const { event, itemData } = actionArgs.args[0];
 
         const $itemElement = this._getItemElementByEventArgs(event);
-        const link = $itemElement && $itemElement.find(`.${ITEM_URL_CLASS}`).get(0);
+        const link = $itemElement && $itemElement.find(`.${ITEM_URL_CLASS}`)[0];
 
-        if(itemData.url && link) {
-            link.click();
+        if(!itemData.url || !link) {
+            return;
         }
+
+        const isNativeLinkClick = $(event.target).closest(`.${ITEM_URL_CLASS}`).length;
+
+        if(isNativeLinkClick) {
+            return;
+        }
+
+        this._clickByLink(link);
     }
 
     _updateSubmenuVisibilityOnClick(actionArgs) {
