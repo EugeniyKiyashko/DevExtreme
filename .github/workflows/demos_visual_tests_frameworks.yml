@@ -244,7 +244,6 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Download artifacts
-      if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'force all tests')
       uses: actions/download-artifact@v4
       with:
         name: changed-demos
@@ -285,46 +284,54 @@ jobs:
     - name: Install tgz
       run: pnpm add -w ./devextreme-installer.tgz ./devextreme-dist-installer.tgz ./devextreme-react-installer.tgz ./devextreme-vue-installer.tgz ./devextreme-angular-installer.tgz
 
-    - uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 5.0.408
-
-    - name: Prepare dotnet
-      run: |
-        dotnet new globaljson --sdk-version 5.0.408
-        dotnet tool install -g dotnet-format --version 5.1.225507
-
     - name: Run lint
       working-directory: apps/demos
       env:
-        CHANGEDFILEINFOSPATH: changed-files.json
         DEBUG: 'eslint:cli-engine,stylelint:standalone'
-      run: pnpx nx lint
+      run: | 
+        pnpx nx lint-non-demos
+
+        if [ -f "changed-files.json" ]; then
+          echo "Running lint-demos on changed files"
+          
+          CHANGED_DEMOS=$(jq -r '.[]' changed-files.json | grep '^apps/demos/Demos/' | sed 's|^apps/demos/||' | tr '\n' ' ')
+          
+          if [ ! -z "$CHANGED_DEMOS" ]; then
+            echo "Changed demo files: $CHANGED_DEMOS"
+            eslint $CHANGED_DEMOS
+          else
+            echo "No demo files changed, skipping lint-demos"
+          fi
+        else
+          echo "Running lint-demos on all files"
+          pnpm run lint-demos
+        fi
+
 
   check_generated_demos:
     name: ${{ matrix.name }}
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    needs: build-demos
+    needs:
+      - build-devextreme
+      - get-changes
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Check generated demos (1/5)
-            command: CONSTEL=1/5 pnpm run convert-to-js
-          - name: Check generated demos (2/5)
-            command: CONSTEL=2/5 pnpm run convert-to-js
-          - name: Check generated demos (3/5)
-            command: CONSTEL=3/5 pnpm run convert-to-js
-          - name: Check generated demos (4/5)
-            command: CONSTEL=4/5 pnpm run convert-to-js
-          - name: Check generated demos (5/5)
-            command: CONSTEL=5/5 pnpm run convert-to-js
+          - name: Check generated demos
+            command: pnpm run convert-to-js
 
     steps:
     - name: Get sources
       uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: changed-demos
+        path: apps/demos
 
     - uses: pnpm/action-setup@v4
       with:
@@ -370,7 +377,30 @@ jobs:
     - name: Check generated JS demos
       working-directory: apps/demos
       run: |
-        ${{ matrix.command }}
+        if [ -f "changed-files.json" ]; then
+          echo "Running convert-to-js on changed files only"
+          
+          # Extract unique React demo directories from changed files
+          CHANGED_DEMOS=$(jq -r '.[]' changed-files.json | grep '/React/' | grep '\.tsx$' | sed 's|^apps/demos/||' | sed 's|/[^/]*\.tsx$||' | sort | uniq)
+          
+          if [ -z "$CHANGED_DEMOS" ]; then
+            echo "No React demos found in changed files, skipping conversion"
+          else
+            echo "Changed React demos:"
+            echo "$CHANGED_DEMOS"
+            
+            # Convert each changed demo directory
+            echo "$CHANGED_DEMOS" | while read -r demo_dir; do
+              if [ ! -z "$demo_dir" ]; then
+                echo "Converting: $demo_dir"
+                pnpm run convert-to-js "$demo_dir"
+              fi
+            done
+          fi
+        else
+          echo "Running convert-to-js on all files"
+          ${{ matrix.command }}
+        fi
 
         git add ./Demos -N
 
@@ -384,6 +414,7 @@ jobs:
 
   testcafe:
     needs: build-demos
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'force all tests')
     strategy:
       fail-fast: false
       matrix:
@@ -415,7 +446,6 @@ jobs:
         name: devextreme-sources
 
     - name: Download artifacts
-      if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'force all tests')
       uses: actions/download-artifact@v4
       with:
         name: changed-demos
