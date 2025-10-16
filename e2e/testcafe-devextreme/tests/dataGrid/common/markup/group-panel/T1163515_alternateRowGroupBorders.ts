@@ -170,6 +170,9 @@ const markupTest = (matrixOptions) => {
 };
 
 [Themes.materialBlue, Themes.genericLight].forEach((theme) => {
+  fixture.disablePageReloads`Grouping Panel - Borders with enabled alternate rows - ${theme}`
+    .page(url(__dirname, '../../../../container.html'));
+
   [true, false].forEach((hasFixedColumn) => {
     [true, false].forEach((hasMasterDetail) => {
       [true, false].forEach((rowAlternationEnabled) => {

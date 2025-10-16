@@ -55,6 +55,9 @@ test('Current time indicator should be placed correctly when there are many grou
   'vertical',
   'horizontal',
 ].forEach((grouping) => {
+  fixture.disablePageReloads`Scheduler: Grouping - ${grouping}`
+    .page(url(__dirname, '../../../../container.html'));
+
   [
     { view: 'day', cellDuration: 240 },
     { view: 'week', cellDuration: 240 },
