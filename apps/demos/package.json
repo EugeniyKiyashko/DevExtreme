@@ -28,7 +28,7 @@
         "@vue/compiler-sfc": "3.4.27",
         "@vue/shared": "^3.2.47",
         "cldr-core": "40.0.0",
-        "cldr-data": "36.0.1",
+        "cldr-data": "36.0.2",
         "cldr-dates-full": "40.0.0",
         "cldr-numbers-full": "40.0.0",
         "cldrjs": "0.5.5",
@@ -73,7 +73,7 @@
         "turndown": "~7.1.0",
         "typescript": "~5.4.5",
         "vue": "^3.3.4",
-        "vuex": "4.0.0-beta.4",
+        "vuex": "4.0.0",
         "whatwg-fetch": "2.0.4",
         "yargs": "17.7.2",
         "zone.js": "0.14.10"
