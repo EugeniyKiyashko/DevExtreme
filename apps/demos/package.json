@@ -15,7 +15,7 @@
         "devextreme-vue": "workspace:~24.2.0"
     },
     "dependencies": {
-        "@angular/cli": "17.3.8",
+        "@angular/cli": "20.3.15",
         "@angular/common": "17.3.12",
         "@angular/compiler": "17.3.12",
         "@angular/compiler-cli": "17.3.12",
@@ -51,7 +51,7 @@
         "inferno": "^7.4.9",
         "inferno-create-element": "7.4.11",
         "jquery": "3.6.3",
-        "jspdf": "2.5.1",
+        "jspdf": "4.1.0",
         "jspdf-autotable": "3.8.2",
         "jszip": "^3.10.1",
         "luxon": "3.4.4",
