@@ -5,7 +5,6 @@
     "strict": true
   },
   "include": [
-    "Demos/**/Vue/**/*.vue",
-    "types/**/*.d.ts"
+    "Demos/**/Vue/**/*.vue"
   ]
 }
