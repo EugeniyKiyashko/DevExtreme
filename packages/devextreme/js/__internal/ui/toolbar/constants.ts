@@ -7,6 +7,7 @@ export const DROPDOWNMENU_BUTTON_CLASS = 'dx-dropdownmenu-button';
 export const MENU_CLASS = 'dx-menu';
 export const MENU_ITEM_CLASS = 'dx-menu-item';
 export const MENU_ITEM_EXPANDED_CLASS = 'dx-menu-item-expanded';
+export const TOOLBAR_SEPARATOR_CLASS = 'dx-toolbar-separator';
 
 export const TOOLBAR_ITEMS = ['dxAutocomplete', 'dxButton', 'dxCheckBox', 'dxDateBox', 'dxDateRangeBox', 'dxMenu', 'dxSelectBox', 'dxSwitch', 'dxTabs', 'dxTextBox', 'dxButtonGroup', 'dxDropDownButton'] as const;
 export const TOOLBAR_WIDGETS_SELECTOR = TOOLBAR_ITEMS.map((w) => w.toLowerCase().replace('dx', '.dx-')).join(',');

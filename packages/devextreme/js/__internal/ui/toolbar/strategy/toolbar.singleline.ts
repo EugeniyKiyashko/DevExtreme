@@ -12,7 +12,7 @@ import type { Properties } from '@ts/ui/toolbar/toolbar';
 import type Toolbar from '@ts/ui/toolbar/toolbar';
 
 const INVISIBLE_STATE_CLASS = 'dx-state-invisible';
-const TOOLBAR_DROP_DOWN_MENU_CONTAINER_CLASS = 'dx-toolbar-menu-container';
+export const TOOLBAR_DROP_DOWN_MENU_CONTAINER_CLASS = 'dx-toolbar-menu-container';
 
 const TOOLBAR_BUTTON_CLASS = 'dx-toolbar-button';
 
