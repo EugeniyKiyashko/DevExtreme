@@ -3579,7 +3579,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
         this.clock.tick(TICK_DELAY.instant);
 
         const $wrapper = $(`.${DROPDOWNMENU_POPUP_WRAPPER_CLASS}`);
-        assert.ok(
+        assert.strictEqual(
             $wrapper.hasClass(DROPDOWNMENU_LIST_FOCUS_MODE_CLASS),
             true,
             'popup wrapper has dx-dropdownmenu-list-focus-mode class when allowKeyboardNavigation:true'
@@ -3598,8 +3598,8 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
         menu.option('opened', true);
         this.clock.tick(TICK_DELAY.instant);
 
-        const $wrapper = $(`.${DROP_DOWN_MENU_POPUP_WRAPPER_CLASS}`);
-        assert.notOk(
+        const $wrapper = $(`.${DROPDOWNMENU_POPUP_WRAPPER_CLASS}`);
+        assert.strictEqual(
             $wrapper.hasClass(DROPDOWNMENU_LIST_FOCUS_MODE_CLASS),
             false,
             'popup wrapper does not have dx-dropdownmenu-list-focus-mode class when allowKeyboardNavigation:false'
@@ -4880,7 +4880,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         const toolbar = createToolbar(makeItems());
         this.clock.tick(TICK_DELAY.instant);
 
-        const $overflow = this.$element.find(`.${DROP_DOWN_MENU_BUTTON_CLASS}`);
+        const $overflow = this.$element.find(`.${DROPDOWNMENU_BUTTON_CLASS}`);
         assert.ok($overflow.length, 'precondition: overflow button is present');
         toolbar.option('focusedElement', $overflow.get(0));
         toolbar._focusItemWidget($overflow);
