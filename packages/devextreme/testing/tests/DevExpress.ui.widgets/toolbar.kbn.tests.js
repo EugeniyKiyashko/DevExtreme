@@ -86,6 +86,13 @@ const overflowButtonItem = (text, extra = {}) => ({
 const createToolbar = (items, options = {}, selector = TOOLBAR_SELECTOR) =>
     $(selector).dxToolbar({ items, ...options }).dxToolbar('instance');
 
+const getAvailableItems = (toolbar) => toolbar._getAvailableItems();
+const getOverflowMenu = (toolbar) => toolbar._layoutStrategy._menu;
+const getOverflowList = (menu) => menu._list;
+const getOverflowListItems = (menu) => getOverflowList(menu)._getAvailableItems();
+const getOverflowPopupContent = (menu) => menu._popup.$overlayContent();
+const getDropDownButtonListRoot = (dropDownButton) => dropDownButton._list.$element();
+
 const press = (key, target, modifiers = {}) => {
     const el = target instanceof Element
         ? target
@@ -96,7 +103,7 @@ const press = (key, target, modifiers = {}) => {
 };
 
 const focusItemAt = (toolbar, index) => {
-    const $items = toolbar._getAvailableItems();
+    const $items = getAvailableItems(toolbar);
     const $item = $items.eq(index);
     toolbar.option('focusedElement', $item.get(0));
     toolbar._focusItemWidget($item);
@@ -127,7 +134,7 @@ const findInput = ($item) => $item.find('.dx-texteditor-input').first();
 const getActiveItem = (toolbar) => $(toolbar.option('focusedElement'));
 
 const assertFocusedItemAt = (assert, toolbar, expectedIndex, message) => {
-    const $items = toolbar._getAvailableItems();
+    const $items = getAvailableItems(toolbar);
     assert.strictEqual(
         getActiveItem(toolbar).get(0),
         $items.eq(expectedIndex).get(0),
@@ -201,7 +208,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
             press('Enter');
             this.clock.tick(50);
 
-            const $input = findInput(toolbar._getAvailableItems().eq(1));
+            const $input = findInput(getAvailableItems(toolbar).eq(1));
             assert.strictEqual(getActiveElement(), $input.get(0),
                 `Enter focuses ${widget} input`);
         });
@@ -213,7 +220,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
             press('Enter');
             this.clock.tick(50);
 
-            const $input = findInput(toolbar._getAvailableItems().eq(1));
+            const $input = findInput(getAvailableItems(toolbar).eq(1));
             press('ArrowLeft', $input.get(0));
             press('ArrowRight', $input.get(0));
 
@@ -227,7 +234,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
 
             press('Enter');
             this.clock.tick(50);
-            const $input = findInput(toolbar._getAvailableItems().eq(1));
+            const $input = findInput(getAvailableItems(toolbar).eq(1));
             press('Escape', $input.get(0));
             this.clock.tick(50);
 
@@ -241,7 +248,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
 
             press('Enter');
             this.clock.tick(50);
-            const $input = findInput(toolbar._getAvailableItems().eq(1));
+            const $input = findInput(getAvailableItems(toolbar).eq(1));
             press('Escape', $input.get(0));
             this.clock.tick(50);
             press('ArrowRight');
@@ -256,7 +263,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
 
             press('Enter');
             this.clock.tick(50);
-            const $input = findInput(toolbar._getAvailableItems().eq(1));
+            const $input = findInput(getAvailableItems(toolbar).eq(1));
             press('Escape', $input.get(0));
             this.clock.tick(50);
             press('ArrowRight');
@@ -269,7 +276,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
             const toolbar = createEditorSandwichToolbar(widget, options);
             focusItemAt(toolbar, 1);
 
-            const $editor = toolbar._getAvailableItems().eq(1).find('.dx-texteditor').first();
+            const $editor = getAvailableItems(toolbar).eq(1).find('.dx-texteditor').first();
             assert.notOk($editor.hasClass('dx-state-focused'),
                 `${widget} root has no dx-state-focused before Enter`);
         });
@@ -281,7 +288,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
             press('Enter');
             this.clock.tick(50);
 
-            const $editor = toolbar._getAvailableItems().eq(1).find('.dx-texteditor').first();
+            const $editor = getAvailableItems(toolbar).eq(1).find('.dx-texteditor').first();
             assert.ok($editor.hasClass('dx-state-focused'),
                 `${widget} root has dx-state-focused after Enter`);
         });
@@ -457,7 +464,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
             press('Enter');
             this.clock.tick(50);
 
-            const $item = toolbar._getAvailableItems().eq(1);
+            const $item = getAvailableItems(toolbar).eq(1);
             assert.ok($item.get(0).contains(getActiveElement()),
                 `Enter places DOM focus inside ${widget}`);
             assert.ok($item.find(innerFocusableSelector).length > 0,
@@ -488,7 +495,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
             press('Escape', getActiveElement());
             this.clock.tick(50);
 
-            const $item = toolbar._getAvailableItems().eq(1);
+            const $item = getAvailableItems(toolbar).eq(1);
             assert.ok($item.get(0).contains(getActiveElement()),
                 `Esc keeps DOM focus inside the ${widget} toolbar item`);
         });
@@ -534,7 +541,7 @@ QUnit.module('Enter/Exit: dxTabs in toolbar', moduleConfig, function() {
 
     const focusTabsContainer = (toolbar, clock) => {
         focusItemAt(toolbar, 1);
-        const $tabs = toolbar._getAvailableItems().eq(1).find('.dx-tabs');
+        const $tabs = getAvailableItems(toolbar).eq(1).find('.dx-tabs');
         $tabs.get(0).focus();
         clock.tick(50);
         return $tabs.dxTabs('instance');
@@ -594,7 +601,7 @@ QUnit.module('Core Navigation', moduleConfig, function() {
 
     QUnit.test('first available item is the roving tabindex anchor on init', function(assert) {
         const toolbar = createToolbar(makeButtonItems(3));
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         const $tabZeroElements = this.$element.find('[tabindex="0"]');
         assert.strictEqual($tabZeroElements.length, 1, 'exactly one element with tabindex=0');
@@ -673,7 +680,7 @@ QUnit.module('Core Navigation', moduleConfig, function() {
     disabledScenarios.forEach(({ name, items }) => {
         QUnit.test(`ArrowRight skips disabled item (${name})`, function(assert) {
             const toolbar = createToolbar(items);
-            const $items = toolbar._getAvailableItems();
+            const $items = getAvailableItems(toolbar);
             assert.strictEqual($items.length, 2, 'only 2 available items (disabled filtered out)');
 
             focusItemAt(toolbar, 0);
@@ -733,7 +740,7 @@ QUnit.module('Core Navigation', moduleConfig, function() {
             buttonItem('C', { options: { disabled: true } }),
             buttonItem('D'),
         ]);
-        assert.strictEqual(toolbar._getAvailableItems().length, 2, 'only 2 available items');
+        assert.strictEqual(getAvailableItems(toolbar).length, 2, 'only 2 available items');
 
         focusItemAt(toolbar, 0);
         press('ArrowRight');
@@ -776,7 +783,7 @@ QUnit.module('Core Navigation', moduleConfig, function() {
 
     QUnit.test('ArrowRight transfers tabindex=0 from previous to newly focused item', function(assert) {
         const toolbar = createToolbar(makeButtonItems(3));
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         focusItemAt(toolbar, 0);
 
         press('ArrowRight');
@@ -788,7 +795,7 @@ QUnit.module('Core Navigation', moduleConfig, function() {
 
     QUnit.test('focusing an item via pointer makes it the roving tabindex anchor', function(assert) {
         const toolbar = createToolbar(makeButtonItems(3));
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         $items.eq(1).find('.dx-button').get(0).dispatchEvent(new Event('focusin', { bubbles: true }));
 
@@ -842,7 +849,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowDown/Up on dxButtonGroup pass through: toolbar focus stays on ButtonGroup', function(assert) {
         const toolbar = createButtonGroupToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $buttonGroupItem = $items.eq(1);
 
         toolbar.option('focusedElement', $buttonGroupItem.get(0));
@@ -857,7 +864,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowLeft on dxButtonGroup moves toolbar focus to previous item', function(assert) {
         const toolbar = createButtonGroupToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowLeft', this.$element.get(0));
@@ -867,7 +874,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowRight on dxButtonGroup moves toolbar focus to next item', function(assert) {
         const toolbar = createButtonGroupToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowRight', this.$element.get(0));
@@ -897,7 +904,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Enter on dxDropDownButton opens popup', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $dropDownButtonItem = toolbar._getAvailableItems().eq(1);
+        const $dropDownButtonItem = getAvailableItems(toolbar).eq(1);
         const dropDownButton = getDropDownButton(this.$element);
 
         setButtonGroupFocusedItem($dropDownButtonItem);
@@ -909,7 +916,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Space on dxDropDownButton opens popup', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $dropDownButtonItem = toolbar._getAvailableItems().eq(1);
+        const $dropDownButtonItem = getAvailableItems(toolbar).eq(1);
         const dropDownButton = getDropDownButton(this.$element);
 
         setButtonGroupFocusedItem($dropDownButtonItem);
@@ -921,7 +928,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowDown on dxDropDownButton opens popup', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $dropDownButtonItem = toolbar._getAvailableItems().eq(1);
+        const $dropDownButtonItem = getAvailableItems(toolbar).eq(1);
         const dropDownButton = getDropDownButton(this.$element);
 
         toolbar.option('focusedElement', $dropDownButtonItem.get(0));
@@ -933,7 +940,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc on dxDropDownButton (open) closes popup and keeps toolbar focus', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $dropDownButtonItem = toolbar._getAvailableItems().eq(1);
+        const $dropDownButtonItem = getAvailableItems(toolbar).eq(1);
         const dropDownButton = getDropDownButton(this.$element);
 
         dropDownButton.option('opened', true);
@@ -949,7 +956,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowLeft/Right on dxDropDownButton (popup closed) navigates toolbar', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowRight', this.$element.get(0));
@@ -962,7 +969,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowLeft/Right on dxDropDownButton (popup open) does NOT navigate toolbar', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $dropDownButtonItem = $items.eq(1);
 
         toolbar.option('focusedElement', $dropDownButtonItem.get(0));
@@ -986,7 +993,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('selecting item in dxDropDownButton popup via keyboard preserves toolbar focusedElement', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $dropDownButtonItem = $items.eq(1);
 
         toolbar.option('focusedElement', $dropDownButtonItem.get(0));
@@ -997,7 +1004,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
         const dropDownButton = getDropDownButton(this.$element);
         assert.strictEqual(dropDownButton.option('opened'), true, 'popup opened');
 
-        const $listItem = $(dropDownButton._list.$element().find('.dx-list-item').first());
+        const $listItem = $(getDropDownButtonListRoot(dropDownButton).find('.dx-list-item').first());
         $listItem.trigger('dxclick');
         this.clock.tick(300);
 
@@ -1008,7 +1015,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('focus moves to popup content on open — toolbar does not lose focusedElement', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $dropDownButtonItem = $items.eq(1);
 
         toolbar.option('focusedElement', $dropDownButtonItem.get(0));
@@ -1019,7 +1026,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
         const dropDownButton = getDropDownButton(this.$element);
         assert.strictEqual(dropDownButton.option('opened'), true, 'popup opened');
 
-        const $listItem = $(dropDownButton._list.$element().find('.dx-list-item').first());
+        const $listItem = $(getDropDownButtonListRoot(dropDownButton).find('.dx-list-item').first());
         $listItem.get(0).focus();
         this.clock.tick(0);
 
@@ -1029,7 +1036,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('tabindex stays on DropDownButton after selecting item via keyboard', function(assert) {
         const toolbar = createDropDownButtonToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $dropDownButtonItem = $items.eq(1);
 
         toolbar.option('focusedElement', $dropDownButtonItem.get(0));
@@ -1038,7 +1045,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
         this.clock.tick(300);
 
         const dropDownButton = getDropDownButton(this.$element);
-        const $listItem = $(dropDownButton._list.$element().find('.dx-list-item').first());
+        const $listItem = $(getDropDownButtonListRoot(dropDownButton).find('.dx-list-item').first());
         $listItem.trigger('dxclick');
         this.clock.tick(300);
 
@@ -1063,7 +1070,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Enter on dxSelectBox (toolbar mode) focuses the input', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $items.eq(1).get(0));
 
         press('Enter', this.$element.get(0));
@@ -1075,7 +1082,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowDown on dxSelectBox (toolbar mode) does not open list', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $items.eq(1).get(0));
 
         const selectBox = $items.eq(1).find('.dx-selectbox').dxSelectBox('instance');
@@ -1087,7 +1094,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc on dxSelectBox (list open) closes list', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const selectBox = $items.eq(1).find('.dx-selectbox').dxSelectBox('instance');
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
@@ -1104,7 +1111,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('ArrowLeft does not navigate toolbar while SelectBox input is focused', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const selectBox = $items.eq(1).find('.dx-selectbox').dxSelectBox('instance');
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
@@ -1124,7 +1131,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc on dxSelectBox (list closed, input focused) returns focus to root div', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
         const $rootDiv = $items.eq(1).find('.dx-selectbox');
 
@@ -1140,7 +1147,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('arrows on dxSelectBox (toolbar mode) navigates toolbar', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowLeft', this.$element.get(0));
@@ -1163,7 +1170,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('arrows on dxTextBox (toolbar mode) navigates toolbar', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowLeft', this.$element.get(0));
@@ -1176,7 +1183,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Enter on dxTextBox focuses input', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
@@ -1193,7 +1200,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc on dxTextBox (input focused) returns to toolbar mode; arrows navigate', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
@@ -1210,7 +1217,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc from TextBox then ArrowRight: TextBox input has tabindex=-1', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
         const $textEditor = $items.eq(1).find('.dx-textbox');
 
@@ -1234,7 +1241,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc from TextBox then ArrowLeft: TextBox input has tabindex=-1', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
@@ -1255,7 +1262,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('Esc from SelectBox then ArrowRight: SelectBox input has tabindex=-1', function(assert) {
         const toolbar = createSelectBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
         const $selectBox = $items.eq(1).find('.dx-selectbox');
 
@@ -1279,7 +1286,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('TextBox active item: container has tabindex=0, input has tabindex=-1', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
         const $textEditor = $items.eq(1).find('.dx-textbox');
 
@@ -1298,7 +1305,7 @@ QUnit.module('Widget interaction', moduleConfig, function() {
 
     QUnit.test('TextBox active item: non-focused items have tabindex=-1', function(assert) {
         const toolbar = createTextBoxToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
@@ -1322,7 +1329,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
 
     QUnit.test('focusin on item[j] sets it as the roving anchor (others release the stop)', function(assert) {
         const toolbar = createToolbar(threeButtons());
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         focusInner($items.eq(1).find('.dx-button'));
 
@@ -1336,7 +1343,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
 
     QUnit.test('focusin on item[j], then ArrowRight moves to item[j+1]', function(assert) {
         const toolbar = createToolbar(threeButtons());
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         focusInner($items.eq(1).find('.dx-button'));
         press('ArrowRight');
@@ -1347,7 +1354,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
 
     QUnit.test('focusin on item[j], then ArrowLeft moves to item[j-1]', function(assert) {
         const toolbar = createToolbar(threeButtons());
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         focusInner($items.eq(1).find('.dx-button'));
         press('ArrowLeft');
@@ -1362,7 +1369,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
             editorItem('dxTextBox', { value: 'hello' }),
             buttonItem('Next'),
         ]);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         focusInner($input);
@@ -1378,7 +1385,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
             editorItem('dxTextBox', { value: 'hello' }),
             buttonItem('Next'),
         ]);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         focusInner($input);
@@ -1396,7 +1403,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
             editorItem('dxSelectBox', { items: ['A', 'B', 'C'], value: 'A' }),
             buttonItem('Next'),
         ]);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = $items.eq(1).find('.dx-texteditor-input');
 
         focusInner($input);
@@ -1411,7 +1418,7 @@ QUnit.module('Mouse and keyboard sync', moduleConfig, function() {
             editorItem('dxDropDownButton', { items: ['Option 1', 'Option 2'], text: 'Actions' }),
             buttonItem('Next'),
         ]);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $buttonGroup = $items.eq(1).find('.dx-buttongroup');
         const dropDownButton = this.$element.find('.dx-dropdownbutton').dxDropDownButton('instance');
 
@@ -1445,7 +1452,7 @@ QUnit.module('Disabled items skip (focusin-driven)', moduleConfig, function() {
 
     QUnit.test('ArrowRight skips disabled middle item (focusin-driven)', function(assert) {
         const toolbar = createToolbar(triadWithMiddleDisabled());
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         triggerFocusinOn($available.eq(0), this.clock);
         press('ArrowRight', findFocusTarget($available.eq(0)).get(0));
@@ -1456,7 +1463,7 @@ QUnit.module('Disabled items skip (focusin-driven)', moduleConfig, function() {
 
     QUnit.test('ArrowLeft skips disabled middle item (focusin-driven)', function(assert) {
         const toolbar = createToolbar(triadWithMiddleDisabled());
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         triggerFocusinOn($available.eq(1), this.clock);
         press('ArrowLeft', findFocusTarget($available.eq(1)).get(0));
@@ -1471,7 +1478,7 @@ QUnit.module('Disabled items skip (focusin-driven)', moduleConfig, function() {
             buttonItem('B'),
             buttonItem('C'),
         ]);
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         triggerFocusinOn($available.eq(1), this.clock);
         press('Home', findFocusTarget($available.eq(1)).get(0));
@@ -1486,7 +1493,7 @@ QUnit.module('Disabled items skip (focusin-driven)', moduleConfig, function() {
             buttonItem('B'),
             buttonItem('Disabled', { disabled: true }),
         ]);
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         triggerFocusinOn($available.eq(0), this.clock);
         press('End', findFocusTarget($available.eq(0)).get(0));
@@ -1497,7 +1504,7 @@ QUnit.module('Disabled items skip (focusin-driven)', moduleConfig, function() {
 
     QUnit.test('disabled item never receives tabindex=0 even after navigation', function(assert) {
         const toolbar = createToolbar(triadWithMiddleDisabled());
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $disabled = this.$element.find(`.${TOOLBAR_ITEM_CLASS}.${DISABLED_STATE_CLASS}`).first();
 
         triggerFocusinOn($available.eq(0), this.clock);
@@ -1532,7 +1539,7 @@ QUnit.module('Resize and overflow', {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         assert.strictEqual($items.length, 3, 'all 3 items visible initially');
 
         toolbar.option('focusedElement', $items.eq(2).get(0));
@@ -1543,7 +1550,7 @@ QUnit.module('Resize and overflow', {
         toolbar.updateDimensions();
         this.clock.tick(0);
 
-        const $visibleAfter = toolbar._getAvailableItems();
+        const $visibleAfter = getAvailableItems(toolbar);
         assert.ok($visibleAfter.length < 3, 'fewer items visible after shrink');
 
         assert.strictEqual(findFocusTarget($visibleAfter.eq(0)).attr('tabindex'), '0',
@@ -1563,14 +1570,14 @@ QUnit.module('Resize and overflow', {
         toolbar.updateDimensions();
         this.clock.tick(0);
 
-        const $visibleSmall = toolbar._getAvailableItems();
+        const $visibleSmall = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $visibleSmall.eq(0).get(0));
 
         this.$container.width(1000);
         toolbar.updateDimensions();
         this.clock.tick(0);
 
-        const $visibleLarge = toolbar._getAvailableItems();
+        const $visibleLarge = getAvailableItems(toolbar);
         assert.strictEqual($visibleLarge.length, 3, 'all items visible after expand');
         assert.strictEqual(findFocusTarget($visibleLarge.eq(0)).attr('tabindex'), '0',
             'active item A still has tabindex=0');
@@ -1589,7 +1596,7 @@ QUnit.module('Resize and overflow', {
             ],
         }).dxToolbar('instance');
 
-        toolbar.option('focusedElement', toolbar._getAvailableItems().eq(1).get(0));
+        toolbar.option('focusedElement', getAvailableItems(toolbar).eq(1).get(0));
 
         this.$container.width(100);
         toolbar.updateDimensions();
@@ -1607,7 +1614,7 @@ QUnit.module('Resize and overflow', {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $items.eq(1).get(0));
 
         this.$container.width(100);
@@ -1627,7 +1634,7 @@ QUnit.module('Resize and overflow', {
             ],
         }).dxToolbar('instance');
 
-        toolbar.option('focusedElement', toolbar._getAvailableItems().eq(0).get(0));
+        toolbar.option('focusedElement', getAvailableItems(toolbar).eq(0).get(0));
 
         this.$container.width(50);
         toolbar.updateDimensions();
@@ -1647,7 +1654,7 @@ QUnit.module('Resize and overflow', {
             ],
         }).dxToolbar('instance');
 
-        toolbar.option('focusedElement', toolbar._getAvailableItems().eq(1).get(0));
+        toolbar.option('focusedElement', getAvailableItems(toolbar).eq(1).get(0));
 
         this.$container.width(100);
         toolbar.updateDimensions();
@@ -1657,7 +1664,7 @@ QUnit.module('Resize and overflow', {
         toolbar.updateDimensions();
         this.clock.tick(0);
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         assert.strictEqual($items.length, 3, 'all items visible');
         assert.strictEqual(findFocusTarget($items.eq(1)).attr('tabindex'), '0',
             'previously focused item B has tabindex=0');
@@ -1690,7 +1697,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         press('Enter', $overflowBtn.get(0));
         this.clock.tick(0);
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after Enter');
     });
 
@@ -1702,8 +1709,8 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         press('Enter', $overflowBtn.get(0));
         this.clock.tick(0);
 
-        const menu = toolbar._layoutStrategy._menu;
-        const $firstListItem = menu._list._getAvailableItems().first();
+        const menu = getOverflowMenu(toolbar);
+        const $firstListItem = getOverflowListItems(menu).first();
         assert.strictEqual(getActiveElement(), findFocusTarget($firstListItem).get(0),
             'Focus is on first menu item after Enter');
     });
@@ -1716,20 +1723,20 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         press(' ', $overflowBtn.get(0));
         this.clock.tick(0);
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after Space');
     });
 
     QUnit.test('ArrowDown navigates inside menu; ArrowRight does not navigate toolbar', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         assert.strictEqual($items.length >= 2, true, 'At least 2 items in menu');
 
         const $firstFocusTarget = findFocusTarget($items.first());
@@ -1759,7 +1766,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('Escape closes menu; focus returns to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $overflowBtn = getOverflowBtn(this.$element);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
@@ -1768,8 +1775,8 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const list = menu._list;
-        const $firstItem = list._getAvailableItems().first();
+        const list = getOverflowList(menu);
+        const $firstItem = getOverflowListItems(menu).first();
         const $focusTarget = findFocusTarget($firstItem);
         press('Escape', $focusTarget.get(0));
         this.clock.tick(0);
@@ -1784,7 +1791,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('item click closes menu; focus returns to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $overflowBtn = getOverflowBtn(this.$element);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
@@ -1810,13 +1817,13 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('Tab inside menu closes popup and moves focus to overflow button (allows Tab default to exit toolbar)', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const $firstFocusTarget = findFocusTarget(menu._list._getAvailableItems().first());
+        const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
         this.clock.tick(0);
         assert.strictEqual(
             getActiveElement(),
@@ -1838,13 +1845,13 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('Shift+Tab inside menu closes popup and moves focus to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const $firstFocusTarget = findFocusTarget(menu._list._getAvailableItems().first());
+        const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         press('Tab', $firstFocusTarget.get(0), { shiftKey: true });
         this.clock.tick(0);
@@ -1866,15 +1873,15 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $overflowBtn = this.$element.find(`.${DROP_DOWN_MENU_BUTTON_CLASS}`);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $firstItem = list._getAvailableItems().first();
+        const list = getOverflowList(menu);
+        const $firstItem = getOverflowListItems(menu).first();
         press('Escape', findFocusTarget($firstItem).get(0));
         this.clock.tick(0);
 
@@ -1894,7 +1901,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('ArrowDown on overflow button opens menu; first item focused', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $overflowBtn = getOverflowBtn(this.$element);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
@@ -1903,8 +1910,8 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu opened via ArrowDown');
 
-        const list = menu._list;
-        const $firstItem = list._getAvailableItems().first();
+        const list = getOverflowList(menu);
+        const $firstItem = getOverflowListItems(menu).first();
         const $focusTarget = findFocusTarget($firstItem);
         assert.strictEqual(
             getActiveElement(),
@@ -1915,7 +1922,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('ArrowUp on overflow button opens menu; last item focused', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $overflowBtn = getOverflowBtn(this.$element);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
@@ -1924,8 +1931,8 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu opened via ArrowUp');
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         const $lastItem = $items.last();
         const $focusTarget = findFocusTarget($lastItem);
         assert.strictEqual(
@@ -1945,12 +1952,12 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         assert.strictEqual($items.length, 2, 'disabled item filtered out of available menu items');
 
         const $firstFocusTarget = findFocusTarget($items.first());
@@ -1972,12 +1979,12 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.openWithFocus('last');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
 
         const $lastFocusTarget = findFocusTarget($items.last());
         press('ArrowUp', $lastFocusTarget.get(0));
@@ -1998,7 +2005,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.openWithFocus('first');
         this.clock.tick(0);
 
@@ -2021,12 +2028,12 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         assert.strictEqual($items.length, 2, 'options.disabled item filtered from menu available items');
 
         const $firstFocusTarget = findFocusTarget($items.first());
@@ -2048,7 +2055,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $overflowBtn = getOverflowBtn(this.$element);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
@@ -2057,8 +2064,8 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         assert.strictEqual($items.length, 1, 'Only 1 non-disabled item available');
 
         const $firstAvailableFocus = findFocusTarget($items.first());
@@ -2071,13 +2078,13 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('focused menu item does not get dx-state-focused class', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         const $firstItem = $items.first();
 
         assert.strictEqual($firstItem.hasClass('dx-state-focused'), false,
@@ -2086,13 +2093,13 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('navigating menu items never adds dx-state-focused to list items', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         const $firstFocusTarget = findFocusTarget($items.first());
 
         press('ArrowDown', $firstFocusTarget.get(0));
@@ -2113,7 +2120,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('overflow button is included in toolbar keyboard navigation sequence', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         assert.strictEqual($available.last().get(0), $overflowBtn.get(0),
             'overflow button is the last available item in the navigation sequence');
@@ -2122,7 +2129,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('overflow button gets tabindex=0 when it becomes the active toolbar item', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $available.last().get(0));
 
@@ -2132,12 +2139,12 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('focused menu item gets tabindex=0 after ArrowDown; previously focused item gets tabindex=-1', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         press('ArrowDown', findFocusTarget($items.first()).get(0));
         this.clock.tick(0);
 
@@ -2149,12 +2156,12 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
     QUnit.test('all non-focused menu items have tabindex=-1 after navigation', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
         press('ArrowDown', findFocusTarget($items.first()).get(0));
         this.clock.tick(0);
 
@@ -2167,7 +2174,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('mouse click on overflow button opens menu; first item is focused (allowKeyboardNavigation=true)', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         assert.strictEqual(toolbar.option('allowKeyboardNavigation'), true, 'allowKeyboardNavigation is true (default)');
 
@@ -2176,8 +2183,8 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after click');
 
-        const list = menu._list;
-        const $firstFocusTarget = findFocusTarget(list._getAvailableItems().first());
+        const list = getOverflowList(menu);
+        const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
             getActiveElement() === $firstFocusTarget.get(0),
@@ -2189,14 +2196,14 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('popup overlay content does not steal focus when menu opens (focus goes to first list item)', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         $overflowBtn.trigger('dxclick');
         this.clock.tick(0);
 
-        const popupContent = menu._popup.$overlayContent().get(0);
-        const list = menu._list;
-        const $firstFocusTarget = findFocusTarget(list._getAvailableItems().first());
+        const popupContent = getOverflowPopupContent(menu).get(0);
+        const list = getOverflowList(menu);
+        const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
             getActiveElement() === popupContent,
@@ -2213,14 +2220,14 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('Escape closes menu after mouse open; focus returns to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         $overflowBtn.trigger('dxclick');
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened');
 
-        const list = menu._list;
-        const $firstFocusTarget = findFocusTarget(list._getAvailableItems().first());
+        const list = getOverflowList(menu);
+        const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
             getActiveElement() === $firstFocusTarget.get(0),
@@ -2242,15 +2249,15 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('Escape closes menu after keyboard open; focus returns to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
         press('Enter', $overflowBtn.get(0));
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after Enter');
 
-        const list = menu._list;
-        const $firstFocusTarget = findFocusTarget(list._getAvailableItems().first());
+        const list = getOverflowList(menu);
+        const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
             getActiveElement() === $firstFocusTarget.get(0),
@@ -2272,7 +2279,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
     QUnit.test('closing menu while focus is outside popup keeps focus on the outside element', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         const $outside = $('<button type="button">outside</button>').appendTo(document.body);
 
         try {
@@ -2314,7 +2321,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
         const $overflowBtn = this.$element.find(`.${DROP_DOWN_MENU_BUTTON_CLASS}`);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         $overflowBtn.get(0).focus();
         this.clock.tick(0);
@@ -2325,7 +2332,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         this.clock.tick(0);
         assert.strictEqual(menu.option('opened'), true, 'overflow popup opened');
 
-        const $listItems = menu._list._getAvailableItems();
+        const $listItems = getOverflowListItems(menu);
         const $menuListItem = $listItems.toArray().map((el) => $(el)).find(($i) => $i.find('.dx-menu').length > 0);
         assert.ok($menuListItem, 'found a list item containing dxMenu');
 
@@ -2343,7 +2350,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         assert.strictEqual(menuInstance.option('focusedElement'), null,
             'dxMenu did NOT activate on ArrowDown — its keyboard handler did not process the key');
 
-        const newFocused = $(menu._list.option('focusedElement')).get(0);
+        const newFocused = $(getOverflowList(menu).option('focusedElement')).get(0);
         assert.notStrictEqual(newFocused, $menuListItem.get(0),
             'list moved to the next item on ArrowDown (instead of menu reacting)');
     });
@@ -2352,7 +2359,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
 QUnit.module('Template items', moduleConfig, function() {
     const focusToolbarItem = (toolbar, index, clock) => {
-        const $item = toolbar._getAvailableItems().eq(index);
+        const $item = getAvailableItems(toolbar).eq(index);
         findFocusTarget($item).get(0).focus();
         clock.tick(0);
         return $item;
@@ -2372,7 +2379,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 3, 'All 3 items (including template) are in navigation sequence');
 
         const $allItems = this.$element.find(`.${TOOLBAR_ITEM_CLASS}`);
@@ -2393,7 +2400,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 2, 'Template item with no focusable content is excluded from navigation');
     });
 
@@ -2479,7 +2486,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 3, 'Template item with [tabindex] div is in navigation sequence');
     });
 
@@ -2595,7 +2602,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 3, 'template with <a href> is included in available items');
     });
 
@@ -2632,7 +2639,7 @@ QUnit.module('Template items', moduleConfig, function() {
         assert.strictEqual($link.attr('tabindex'), '-1',
             'link has tabindex=-1 when not the active item');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         this.$element.trigger($.Event('focusin', { target: findFocusTarget($available.eq(0)).get(0) }));
         this.clock.tick(0);
 
@@ -2652,7 +2659,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $linkItem = $available.eq(1);
         const $itemC = $available.eq(2);
 
@@ -2676,7 +2683,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
         const $linkItem = $available.eq(1);
 
@@ -2701,7 +2708,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 3, 'template with dxButton is included in available items');
     });
 
@@ -2732,7 +2739,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemC = $available.eq(2);
 
         focusToolbarItem(toolbar, 1, this.clock);
@@ -2760,7 +2767,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 3,
             'template with multiple links is one toolbar item — 3 available items total');
     });
@@ -2781,7 +2788,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(1);
         const $links = $templateItem.find('a');
 
@@ -2811,7 +2818,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(1);
         const $links = $templateItem.find('a');
 
@@ -2842,7 +2849,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemC = $available.eq(2);
 
         focusToolbarItem(toolbar, 1, this.clock);
@@ -2870,7 +2877,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
 
         focusToolbarItem(toolbar, 1, this.clock);
@@ -2901,7 +2908,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
         const $aLinks = $itemA.find('a');
 
@@ -2934,7 +2941,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(1);
         const $links = $templateItem.find('a');
 
@@ -2963,7 +2970,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(0);
         const $links = $templateItem.find('a');
 
@@ -2992,7 +2999,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $templateItem = toolbar._getAvailableItems().eq(0);
+        const $templateItem = getAvailableItems(toolbar).eq(0);
         const $links = $templateItem.find('a');
 
         focusToolbarItem(toolbar, 0, this.clock);
@@ -3020,7 +3027,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $templateItem = toolbar._getAvailableItems().eq(0);
+        const $templateItem = getAvailableItems(toolbar).eq(0);
         const $links = $templateItem.find('a');
 
         focusToolbarItem(toolbar, 0, this.clock);
@@ -3048,7 +3055,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemC = $available.eq(2);
 
         focusToolbarItem(toolbar, 1, this.clock);
@@ -3073,7 +3080,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(1);
         const $links = $templateItem.find('a');
 
@@ -3099,7 +3106,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemC = $available.eq(2);
 
         focusToolbarItem(toolbar, 1, this.clock);
@@ -3124,7 +3131,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(1);
         const $itemC = $available.eq(2);
         const $dxButton = $templateItem.find('.dx-button').first();
@@ -3181,7 +3188,7 @@ QUnit.module('Template items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $templateItem = $available.eq(1);
 
         this.$element.trigger($.Event('focusin', { target: findFocusTarget($templateItem).get(0) }));
@@ -3231,7 +3238,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $firstFocusTarget = findFocusTarget($items.first());
 
         const focusBefore = toolbar.option('focusedElement');
@@ -3268,7 +3275,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         assert.strictEqual(menu.option('focusStateEnabled'), true,
             'DropDownMenu keeps its own focusStateEnabled:true (default)');
         assert.strictEqual(menu.option('listFocusStateEnabled'), false,
@@ -3277,7 +3284,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
         menu.option('opened', true);
         this.clock.tick(0);
 
-        assert.strictEqual(menu._list.option('focusStateEnabled'), false,
+        assert.strictEqual(getOverflowList(menu).option('focusStateEnabled'), false,
             'ToolbarMenuList gets focusStateEnabled:false via listFocusStateEnabled');
     });
 
@@ -3290,13 +3297,13 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
         assert.strictEqual(menu.option('focusStateEnabled'), true, 'menu starts with focusStateEnabled:true');
         assert.strictEqual(menu.option('listFocusStateEnabled'), true, 'menu starts with listFocusStateEnabled:true');
-        assert.strictEqual(menu._list.option('focusStateEnabled'), true, 'list starts with focusStateEnabled:true');
+        assert.strictEqual(getOverflowList(menu).option('focusStateEnabled'), true, 'list starts with focusStateEnabled:true');
 
         toolbar.option('allowKeyboardNavigation', false);
 
@@ -3304,7 +3311,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             'DropDownMenu keeps its own focusStateEnabled:true after runtime change');
         assert.strictEqual(menu.option('listFocusStateEnabled'), false,
             'DropDownMenu gets listFocusStateEnabled:false after runtime change');
-        assert.strictEqual(menu._list.option('focusStateEnabled'), false,
+        assert.strictEqual(getOverflowList(menu).option('focusStateEnabled'), false,
             'ToolbarMenuList gets focusStateEnabled:false after runtime change');
     });
 
@@ -3318,7 +3325,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $firstFocusTarget = findFocusTarget($items.first());
         const $secondItem = $items.eq(1).get(0);
 
@@ -3352,7 +3359,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $firstFocusTarget = findFocusTarget($items.first());
         this.$element.trigger($.Event('focusin', { target: $firstFocusTarget.get(0) }));
         this.clock.tick(0);
@@ -3379,7 +3386,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         const tabIndicesBefore = $items.toArray().map(item => findFocusTarget($(item)).attr('tabindex'));
         assert.strictEqual(tabIndicesBefore[0], '0', 'All items start at natural tabindex=0');
@@ -3403,11 +3410,11 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
-        const $listItems = menu._list.$element().find('.dx-list-item');
+        const $listItems = getOverflowList(menu).$element().find('.dx-list-item');
         const allButtonsHaveTabindex = $listItems.toArray().every(el => {
             const $btn = $(el).find('.dx-button');
             return $btn.length === 0 || $btn.attr('tabindex') === '0' || $btn.attr('tabindex') === undefined;
@@ -3425,11 +3432,11 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
-        const focusedElement = menu._list.option('focusedElement');
+        const focusedElement = getOverflowList(menu).option('focusedElement');
         assert.strictEqual(focusedElement, null,
             'no item auto-focused on open when allowKeyboardNavigation:false');
     });
@@ -3444,11 +3451,11 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
-        const $listItems = menu._list.$element().find('.dx-list-item');
+        const $listItems = getOverflowList(menu).$element().find('.dx-list-item');
         const tabindexValues = $listItems.toArray().map(el => {
             const $btn = $(el).find('.dx-button');
             return $btn.length ? $btn.attr('tabindex') : undefined;
@@ -3467,7 +3474,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $items.eq(0).get(0));
         toolbar._focusItemWidget($items.eq(0));
         this.clock.tick(0);
@@ -3567,7 +3574,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
@@ -3586,7 +3593,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
@@ -3605,7 +3612,7 @@ QUnit.module('Extra — Core behaviors', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
@@ -3642,7 +3649,7 @@ QUnit.module('Non-focusable service items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 2, 'separator template is excluded from available items');
     });
 
@@ -3655,7 +3662,7 @@ QUnit.module('Non-focusable service items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 2, 'label template is excluded from available items');
     });
 
@@ -3668,7 +3675,7 @@ QUnit.module('Non-focusable service items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
         const $itemC = $available.eq(1);
 
@@ -3692,7 +3699,7 @@ QUnit.module('Non-focusable service items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
         const $itemC = $available.eq(1);
 
@@ -3716,7 +3723,7 @@ QUnit.module('Non-focusable service items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
         const $itemB = $available.eq(1);
 
@@ -3740,7 +3747,7 @@ QUnit.module('Non-focusable service items', moduleConfig, function() {
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         const $itemA = $available.eq(0);
         const $itemB = $available.eq(1);
 
@@ -3798,7 +3805,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('dxMenu is a single toolbar stop — ArrowRight skips past it', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(0).get(0));
         press('ArrowRight', this.$element.get(0));
@@ -3816,7 +3823,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('dxMenu root does NOT get dx-state-focused on toolbar navigation', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         toolbar._focusItemWidget($items.eq(1));
@@ -3828,7 +3835,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('Enter activates menu — focus moves inside .dx-menu', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3842,7 +3849,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('first menu-item gets dx-state-focused after Enter', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3855,7 +3862,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('ArrowRight inside menu navigates to next root item (not toolbar)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3877,7 +3884,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('ArrowLeft inside menu navigates to previous root item (not toolbar)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3899,7 +3906,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('Escape exits menu — focus returns to .dx-toolbar-item (nav level)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3917,7 +3924,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('menu-item dx-state-focused removed after Escape', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3936,7 +3943,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('after Escape, ArrowRight navigates toolbar to next item', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3954,7 +3961,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('ArrowDown on root menu item opens submenu', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3969,7 +3976,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('tabindex invariant after enter/exit cycle', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -3988,7 +3995,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('tabindex=0 is on .dx-toolbar-item wrapper, not on .dx-menu root', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(0).get(0));
         press('ArrowRight', this.$element.get(0));
@@ -4002,7 +4009,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('dxMenu does not get dx-state-focused on toolbar navigation (before Enter)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         toolbar._focusItemWidget($items.eq(1));
@@ -4026,7 +4033,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('Non-activation keys at toolbar nav level do not activate dxMenu', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         toolbar._focusItemWidget($items.eq(1));
@@ -4048,7 +4055,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('Tab landing on .dx-toolbar-item does not auto-activate dxMenu', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(0).get(0));
         press('ArrowRight', this.$element.get(0));
@@ -4068,7 +4075,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('Escape with open submenu closes submenu first; second Escape exits to toolbar nav', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -4107,7 +4114,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('ArrowDown at nav level does NOT activate dxMenu (menu is already visible)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowDown', this.$element.get(0));
@@ -4124,7 +4131,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('ArrowUp at nav level does NOT activate dxMenu', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('ArrowUp', this.$element.get(0));
@@ -4141,7 +4148,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('Re-activating dxMenu restores previously focused item (menu remembers position)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -4167,7 +4174,7 @@ QUnit.module('Enter/Exit: dxMenu (APG Menu Button)', moduleConfig, function() {
 
     QUnit.test('ArrowDown after opening submenu navigates within submenu (does not re-activate root)', function(assert) {
         const toolbar = createMenuToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(1).get(0));
         press('Enter', this.$element.get(0));
@@ -4217,9 +4224,9 @@ QUnit.module('Enter/Exit: dxMenu inside overflow list', moduleConfig, function()
         press('ArrowDown', getActiveElement());
         clock.tick(0);
 
-        const menu = toolbar._layoutStrategy._menu;
-        const list = menu._list;
-        const $menuListItem = list._getAvailableItems()
+        const menu = getOverflowMenu(toolbar);
+        const list = getOverflowList(menu);
+        const $menuListItem = getOverflowListItems(menu)
             .toArray()
             .map((el) => $(el))
             .find(($i) => $i.find('.dx-menu').length > 0);
@@ -4291,8 +4298,8 @@ QUnit.module('Enter/Exit: dxMenu inside overflow list', moduleConfig, function()
         press('ArrowDown', getActiveElement());
         this.clock.tick(0);
 
-        const menu = toolbar._layoutStrategy._menu;
-        const $input = menu._list.$element().find('.dx-texteditor-input').first();
+        const menu = getOverflowMenu(toolbar);
+        const $input = getOverflowList(menu).$element().find('.dx-texteditor-input').first();
         $input.get(0).focus();
         this.clock.tick(0);
 
@@ -4432,7 +4439,7 @@ QUnit.module('Overflow menu: visual focus states', moduleConfig, function() {
     QUnit.test('overflow button retains focus after Escape closes popup', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         toolbar.option('focusedElement', $overflowBtn.get(0));
         toolbar._focusItemWidget($overflowBtn);
@@ -4441,8 +4448,8 @@ QUnit.module('Overflow menu: visual focus states', moduleConfig, function() {
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $firstItem = list._getAvailableItems().first();
+        const list = getOverflowList(menu);
+        const $firstItem = getOverflowListItems(menu).first();
         const $focusTarget = findFocusTarget($firstItem);
         press('Escape', $focusTarget.get(0));
         this.clock.tick(0);
@@ -4454,7 +4461,7 @@ QUnit.module('Overflow menu: visual focus states', moduleConfig, function() {
 
     QUnit.test('ArrowRight from visible button navigates focus to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $overflowBtn = getOverflowBtn(this.$element);
 
         toolbar.option('focusedElement', $items.eq(0).get(0));
@@ -4472,7 +4479,7 @@ QUnit.module('Overflow menu: visual focus states', moduleConfig, function() {
 
     QUnit.test('previous button loses dx-state-focused when focus moves to overflow button', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         toolbar.option('focusedElement', $items.eq(0).get(0));
         toolbar._focusItemWidget($items.eq(0));
@@ -4491,12 +4498,12 @@ QUnit.module('Overflow menu: visual focus states', moduleConfig, function() {
 
     QUnit.test('overflow list does not set aria-activedescendant on its container when item is focused', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
+        const list = getOverflowList(menu);
         const $listEl = list.$element();
 
         assert.strictEqual($listEl.attr('aria-activedescendant'), undefined,
@@ -4505,13 +4512,13 @@ QUnit.module('Overflow menu: visual focus states', moduleConfig, function() {
 
     QUnit.test('overflow list items do not receive a synthetic id attribute when focused', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
 
         menu.openWithFocus('first');
         this.clock.tick(0);
 
-        const list = menu._list;
-        const $items = list._getAvailableItems();
+        const list = getOverflowList(menu);
+        const $items = getOverflowListItems(menu);
 
         $items.each(function() {
             assert.strictEqual($(this).attr('id'), undefined,
@@ -4642,7 +4649,7 @@ QUnit.module('Item-level tabIndex option', moduleConfig, function() {
         ]);
         focusItemAt(toolbar, 1);
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         assertActiveTabIndex(assert, $items.eq(1), 5,
             'item with options.tabIndex=5 keeps that value while active');
     });
@@ -4657,7 +4664,7 @@ QUnit.module('Item-level tabIndex option', moduleConfig, function() {
 
         press('ArrowRight');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         assertActiveTabIndex(assert, $items.eq(1), -1,
             'previously active item with custom tabIndex returns to -1 when inactive');
         assertActiveTabIndex(assert, $items.eq(2), 0,
@@ -4682,7 +4689,7 @@ QUnit.module('Roving tabindex — incremental vs reset paths', moduleConfig, fun
         const toolbar = createToolbar([buttonItem('Attach'), buttonItem('Send')], {
             focusStateEnabled: false,
         });
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $attach = $items.eq(0);
         const $send = $items.eq(1);
 
@@ -4702,7 +4709,7 @@ QUnit.module('Roving tabindex — incremental vs reset paths', moduleConfig, fun
         const toolbar = createToolbar([buttonItem('Attach'), buttonItem('Send')], {
             focusStateEnabled: false,
         });
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $send = $items.eq(1);
 
         toolbar.option('focusedElement', null);
@@ -4718,7 +4725,7 @@ QUnit.module('Roving tabindex — incremental vs reset paths', moduleConfig, fun
         const toolbar = createToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C'), buttonItem('D')]);
         focusItemAt(toolbar, 1); // start on B
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
 
         press('ArrowRight'); // only B and C should change
 
@@ -4776,7 +4783,7 @@ QUnit.module('Roving tabindex — incremental vs reset paths', moduleConfig, fun
         const toolbar = createToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         focusItemAt(toolbar, 0);
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const initialFirst = parseInt(findFocusTarget($items.eq(0)).attr('tabindex'), 10);
 
         press('ArrowRight');
@@ -4800,7 +4807,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         toolbar.option('items', [buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         this.clock.tick(0);
 
-        const $item1 = toolbar._getAvailableItems().eq(1);
+        const $item1 = getAvailableItems(toolbar).eq(1);
         assert.strictEqual(getActiveElement(), findFocusTarget($item1).get(0),
             'DOM focus restored to item #1 after full re-render');
         assertOneTabStop(assert, this.$element);
@@ -4816,7 +4823,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         toolbar.getDataSource().reload();
         this.clock.tick(0);
 
-        const $item2 = toolbar._getAvailableItems().eq(2);
+        const $item2 = getAvailableItems(toolbar).eq(2);
         assert.strictEqual(getActiveElement(), findFocusTarget($item2).get(0),
             'DOM focus restored after dataSource reload');
         assertOneTabStop(assert, this.$element);
@@ -4844,7 +4851,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         toolbar.option('items', [buttonItem('A'), buttonItem('B')]); // only indices 0,1 remain
         this.clock.tick(0);
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 2, 'two items remain');
         assert.ok(this.$element.get(0).contains(getActiveElement()),
             'focus restored to a still-present item');
@@ -4860,7 +4867,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         toolbar.option('items', [buttonItem('A', { disabled: true }), buttonItem('B'), buttonItem('C')]);
         this.clock.tick(0);
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 2, 'disabled item is excluded from available items');
         assert.strictEqual(getActiveElement(), findFocusTarget($available.eq(0)).get(0),
             'focus moved to the nearest enabled item, never the disabled one');
@@ -4896,7 +4903,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
             [buttonItem('A'), buttonItem('B')],
             { allowKeyboardNavigation: false },
         );
-        findFocusTarget(toolbar._getAvailableItems().eq(0)).get(0).focus();
+        findFocusTarget(getAvailableItems(toolbar).eq(0)).get(0).focus();
 
         toolbar.option('items', [buttonItem('A'), buttonItem('B')]);
         this.clock.tick(0);
@@ -4919,7 +4926,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         toolbar.option('items', makeItems());
         this.clock.tick(0);
 
-        const $tpl = toolbar._getAvailableItems().eq(1);
+        const $tpl = getAvailableItems(toolbar).eq(1);
         assert.strictEqual(getActiveElement(), findFocusTarget($tpl).get(0),
             'focus restored to the template item after re-render');
         assertOneTabStop(assert, this.$element);
@@ -4935,7 +4942,7 @@ QUnit.module('Focus restore on full re-render', moduleConfig, function() {
         toolbar.option('items', [buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         this.clock.tick(0);
 
-        const $item1 = toolbar._getAvailableItems().eq(1);
+        const $item1 = getAvailableItems(toolbar).eq(1);
         assert.strictEqual(getActiveElement(), findFocusTarget($item1).get(0),
             'DOM focus restored in multiline mode');
         assertOneTabStop(assert, this.$element);
@@ -4966,7 +4973,7 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         toolbar.option('items', [buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         this.clock.tick(0);
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         assertActiveTabIndex(assert, $items.eq(2), 0, 'restored item #2 holds tabindex=0');
         assertActiveTabIndex(assert, $items.eq(0), -1, 'item #0 released the reset-default stop');
         assertActiveTabIndex(assert, $items.eq(1), -1, 'item #1 stays at -1');
@@ -4993,7 +5000,7 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         ]);
         this.clock.tick(0);
 
-        const $available = toolbar._getAvailableItems(); // [A(0), C(2), D(3)]
+        const $available = getAvailableItems(toolbar); // [A(0), C(2), D(3)]
         assert.strictEqual($available.length, 3, 'disabled B is excluded');
         assert.strictEqual(getActiveElement(), findFocusTarget($available.eq(1)).get(0),
             'focus landed on C — the next higher enabled item, not the last (D)');
@@ -5009,7 +5016,7 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         toolbar.option('items', [buttonItem('A', { disabled: true }), buttonItem('B', { disabled: true })]);
         this.clock.tick(0);
 
-        assert.strictEqual(toolbar._getAvailableItems().length, 0, 'no available items remain');
+        assert.strictEqual(getAvailableItems(toolbar).length, 0, 'no available items remain');
         assert.notOk(this.$element.get(0).contains(getActiveElement()),
             'no focus is forced when nothing is focusable');
     });
@@ -5018,7 +5025,7 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         const toolbar = createToolbar([buttonItem('A'), buttonItem('B')]);
         const nav = toolbar._navigator;
 
-        const $item0 = toolbar._getAvailableItems().eq(0);
+        const $item0 = getAvailableItems(toolbar).eq(0);
         findFocusTarget($item0).get(0).focus();
         const descriptor = nav.captureFocusedItem();
         assert.ok(descriptor && typeof descriptor === 'object', 'focus on item yields a descriptor');
@@ -5047,7 +5054,7 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         toolbar.option('items', [buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         this.clock.tick(0);
 
-        const $item2 = toolbar._getAvailableItems().eq(2);
+        const $item2 = getAvailableItems(toolbar).eq(2);
         assert.strictEqual(getActiveElement(), findFocusTarget($item2).get(0),
             'seeded descriptor survived the body-focus re-render and drove the restore');
     });
@@ -5058,14 +5065,14 @@ QUnit.module('Focus restore — focused item disabled in place (incremental)', m
         const toolbar = createToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         focusItemAt(toolbar, 1); // focus B
         assert.strictEqual(
-            getActiveElement(), findFocusTarget(toolbar._getAvailableItems().eq(1)).get(0),
+            getActiveElement(), findFocusTarget(getAvailableItems(toolbar).eq(1)).get(0),
             'precondition: B owns DOM focus',
         );
 
         toolbar.option('items[1].disabled', true);
         this.clock.tick(0);
 
-        const $available = toolbar._getAvailableItems(); // [A(0), C(2)]
+        const $available = getAvailableItems(toolbar); // [A(0), C(2)]
         assert.strictEqual($available.length, 2, 'disabled B excluded from available items');
         assert.ok(this.$element.get(0).contains(getActiveElement()),
             'focus stays inside the toolbar after disabling the focused item');
@@ -5081,7 +5088,7 @@ QUnit.module('Focus restore — focused item disabled in place (incremental)', m
         toolbar.option('items[0].disabled', true); // disable the focused item
         this.clock.tick(0);
 
-        const $available = toolbar._getAvailableItems(); // [B(1), C(2)]
+        const $available = getAvailableItems(toolbar); // [B(1), C(2)]
         assert.strictEqual(getActiveElement(), findFocusTarget($available.eq(0)).get(0),
             'DOM focus moved to B after disabling A');
 
@@ -5101,7 +5108,7 @@ QUnit.module('Focus restore — focused item disabled in place (incremental)', m
         this.clock.tick(0);
 
         assert.strictEqual(
-            getActiveElement(), findFocusTarget(toolbar._getAvailableItems().eq(0)).get(0),
+            getActiveElement(), findFocusTarget(getAvailableItems(toolbar).eq(0)).get(0),
             'focus remains on A; disabling another item did not steal focus',
         );
         assertOneTabStop(assert, this.$element);
@@ -5114,7 +5121,7 @@ QUnit.module('Focus restore — focused item disabled in place (incremental)', m
         toolbar.option('items[0].disabled', true);
         this.clock.tick(0);
 
-        assert.strictEqual(toolbar._getAvailableItems().length, 0, 'no enabled items remain');
+        assert.strictEqual(getAvailableItems(toolbar).length, 0, 'no enabled items remain');
         // Nothing is focusable, so there is no roving tab stop to move focus to.
         assert.strictEqual(
             this.$element.find('[tabindex="0"]').not('.dx-texteditor-input').length, 0,
@@ -5269,7 +5276,7 @@ QUnit.module('Escape semantics (consolidated)', moduleConfig, function() {
         press('Enter');
         this.clock.tick(50);
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         const $input = findInput($items.eq(1));
         press('Escape', $input.get(0));
         this.clock.tick(50);
@@ -5327,7 +5334,7 @@ QUnit.module('allowKeyboardNavigation:false — fallback delegation to base', mo
             items: [buttonItem('A'), buttonItem('B')],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $items.eq(0).get(0));
 
         press('ArrowRight', $items.eq(0).get(0));
@@ -5362,7 +5369,7 @@ QUnit.module('allowKeyboardNavigation:false — fallback delegation to base', mo
             items: [buttonItem('A'), buttonItem('B'), buttonItem('C')],
         }).dxToolbar('instance');
 
-        const $items = toolbar._getAvailableItems();
+        const $items = getAvailableItems(toolbar);
         toolbar.option('focusedElement', $items.eq(0).get(0));
         toolbar._moveFocus('right');
 
@@ -5379,11 +5386,11 @@ QUnit.module('allowKeyboardNavigation:false — fallback delegation to base', mo
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
-        const keys = menu._list._supportedKeys();
+        const keys = getOverflowList(menu)._supportedKeys();
         assert.strictEqual(typeof keys.upArrow, 'function', 'menu list inherits upArrow from ListBase at allowKeyboardNavigation:false');
         assert.strictEqual(typeof keys.downArrow, 'function', 'menu list inherits downArrow from ListBase');
     });
@@ -5396,7 +5403,7 @@ QUnit.module('Audit cleanup — utilities and delegation', moduleConfig, functio
             items: [buttonItem('A')],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 0,
             'all items filtered out when widget disabled (isItemDisabled returns true)');
     });
@@ -5410,7 +5417,7 @@ QUnit.module('Audit cleanup — utilities and delegation', moduleConfig, functio
             ],
         }).dxToolbar('instance');
 
-        const $available = toolbar._getAvailableItems();
+        const $available = getAvailableItems(toolbar);
         assert.strictEqual($available.length, 2,
             'disabled item excluded from available items (isItemDisabled detects dx-state-disabled)');
     });
@@ -5425,7 +5432,7 @@ QUnit.module('Audit cleanup — utilities and delegation', moduleConfig, functio
         }).dxToolbar('instance');
 
         const navigatorResult = toolbar._navigator.getAvailableItems().toArray();
-        const widgetResult = toolbar._getAvailableItems().toArray();
+        const widgetResult = getAvailableItems(toolbar).toArray();
 
         assert.deepEqual(navigatorResult, widgetResult,
             'navigator returns same set as widget._getAvailableItems (delegation)');
@@ -5440,12 +5447,12 @@ QUnit.module('Audit cleanup — utilities and delegation', moduleConfig, functio
             ],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
-        const navigatorResult = menu._list._navigator.getAvailableItems().toArray();
-        const listResult = menu._list._getAvailableItems().toArray();
+        const navigatorResult = getOverflowList(menu)._navigator.getAvailableItems().toArray();
+        const listResult = getOverflowListItems(menu).toArray();
 
         assert.deepEqual(navigatorResult, listResult,
             'menu list navigator picks up TOOLBAR_MENU_ACTION_CLASS items via widget._getAvailableItems');
@@ -5498,7 +5505,7 @@ QUnit.module('Space key — text input guard', moduleConfig, function() {
             items: [{ widget: 'dxTextBox', locateInMenu: 'always', options: { value: 'hello' } }],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
@@ -5517,7 +5524,7 @@ QUnit.module('Space key — text input guard', moduleConfig, function() {
             items: [{ widget: 'dxSelectBox', locateInMenu: 'always', options: { items: ['A', 'B'], value: 'A' } }],
         }).dxToolbar('instance');
 
-        const menu = toolbar._layoutStrategy._menu;
+        const menu = getOverflowMenu(toolbar);
         menu.option('opened', true);
         this.clock.tick(0);
 
