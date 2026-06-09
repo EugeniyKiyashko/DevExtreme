@@ -9,9 +9,6 @@ import { appendElementTo, setAttribute } from '../../../helpers/domUtils';
 fixture.disablePageReloads`Toolbar_keyboard_navigation`
   .page(url(__dirname, '../../container.html'));
 
-// Some toolbar items (e.g. dxMenu) hold the roving-tabindex focus on the
-// .dx-toolbar-item wrapper itself rather than on a descendant, so a plain
-// `item.find(':focus')` would miss them. This helper matches both cases.
 const itemHasFocus = (item: Selector): Selector => item.filter(
   (node) => node === document.activeElement
     || node.contains(document.activeElement as Node | null),

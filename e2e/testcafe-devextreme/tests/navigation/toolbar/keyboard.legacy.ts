@@ -4,20 +4,9 @@ import url from '../../../helpers/getPageUrl';
 import { createWidget } from '../../../helpers/createWidget';
 import { appendElementTo } from '../../../helpers/domUtils';
 
-// Legacy (pre roving-tabindex) toolbar keyboard behavior is opt-in via
-// `allowKeyboardNavigation: false`. The new file `keyboard.ts` covers the
-// roving-tabindex mode (default `true`); this one pins down the contract of
-// the legacy mode so it does not silently regress:
-//   * every focusable toolbar item participates in the native Tab order
-//     (no single tab stop, no arrow-key navigation across items);
-//   * the toolbar does not intercept arrow keys — they are delivered to the
-//     focused widget (e.g. dxTabs changes `selectedIndex`).
-
 fixture.disablePageReloads`Toolbar_keyboard_navigation_legacy`
   .page(url(__dirname, '../../container.html'));
 
-// dxMenu (and similar) holds the focus on the .dx-toolbar-item wrapper itself
-// in some scenarios, so a plain `item.find(':focus')` would miss them.
 const itemHasFocus = (item: Selector): Selector => item.filter(
   (node) => node === document.activeElement
     || node.contains(document.activeElement as Node | null),
@@ -62,7 +51,6 @@ test('Tab walks through every toolbar item; Shift+Tab walks back', async (t) => 
   await t.click(externalBefore);
   await t.expect(externalBefore.focused).ok('external before is focused');
 
-  // Forward: Tab visits each toolbar item one by one (no single tab stop).
   await t.pressKey('tab');
   await t.expect(itemHasFocus(toolbar.getItem(0)).exists)
     .ok('Tab #1 -> item[0]');
@@ -79,7 +67,6 @@ test('Tab walks through every toolbar item; Shift+Tab walks back', async (t) => 
   await t.expect(externalAfter.focused)
     .ok('Tab #4 -> external after');
 
-  // Backward: Shift+Tab traverses the same chain in reverse.
   await t.pressKey('shift+tab');
   await t.expect(itemHasFocus(toolbar.getItem(2)).exists)
     .ok('Shift+Tab #1 -> item[2]');
@@ -106,8 +93,6 @@ test('Arrow keys do not move focus across toolbar items', async (t) => {
   await t.expect(itemHasFocus(toolbar.getItem(0)).exists)
     .ok('item[0] focused');
 
-  // None of the arrow / Home / End keys should move focus across items —
-  // the toolbar does not own a roving navigator in legacy mode.
   const keys = ['right', 'left', 'home', 'end', 'down', 'up'];
   await keys.reduce(async (prev, key) => {
     await prev;
@@ -130,7 +115,6 @@ test('Arrow keys are forwarded to the focused widget (dxTabs changes selectedInd
   const toolbar = new Toolbar('#toolbar');
 
   await t.click(externalBefore);
-  // Tab #1 -> Prev button, Tab #2 -> dxTabs.
   await t.pressKey('tab tab');
   await t.expect(itemHasFocus(toolbar.getItem(1)).exists)
     .ok('focus is inside dxTabs item');

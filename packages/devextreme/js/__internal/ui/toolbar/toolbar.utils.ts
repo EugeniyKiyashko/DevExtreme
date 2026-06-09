@@ -10,18 +10,18 @@ import type { KeyboardKeyDownEvent } from '@ts/events/core/m_keyboard_processor'
 import { BUTTON_GROUP_CLASS } from '@ts/ui/button_group';
 import type { ListBase } from '@ts/ui/list/list.base';
 import { OVERLAY_CONTENT_CLASS } from '@ts/ui/overlay/overlay';
-import { TEXTEDITOR_CLASS, TEXTEDITOR_INPUT_CLASS } from '@ts/ui/text_box/text_editor.base';
-
 import {
   DROPDOWNMENU_BUTTON_CLASS,
   MENU_CLASS,
   MENU_ITEM_CLASS,
   MENU_ITEM_EXPANDED_CLASS,
   NATIVE_FOCUSABLE_SELECTOR,
+  TEXTEDITOR_CLASS,
+  TEXTEDITOR_INPUT_CLASS,
   TOOLBAR_ITEMS,
   TOOLBAR_WIDGETS_SELECTOR,
-} from './constants';
-import type Toolbar from './toolbar';
+} from '@ts/ui/toolbar/constants';
+import type Toolbar from '@ts/ui/toolbar/toolbar';
 
 function getItemElementData($element: dxElementWrapper): Record<string, unknown> {
   // @ts-expect-error
@@ -229,12 +229,6 @@ export function toggleItemFocusableElementTabIndex(
   }
 }
 
-// Wraps the inherited `keys.space` handler with a text-input guard. keyboard.on is
-// registered with focusTarget=null in both ToolbarBase and ToolbarMenuList, so
-// _keyboardHandler fires for every keydown that bubbles up — including those from
-// <input>/<textarea> inside an item widget. Without this guard the inherited handler
-// would call e.preventDefault() unconditionally and swallow the space character typed
-// inside a TextBox or SelectBox.
 export function wrapSpaceKey(keys: SupportedKeys): void {
   const originalSpace = keys.space;
   if (!originalSpace) {

@@ -5,9 +5,9 @@ import $ from '@js/core/renderer';
 import type { DxEvent } from '@js/events';
 import { getPublicElement } from '@ts/core/m_element';
 import eventsEngine from '@ts/events/core/m_events_engine';
-
-import { DROPDOWNMENU_BUTTON_CLASS } from '../constants';
-import type ToolbarBase from '../toolbar.base';
+import { DROPDOWNMENU_BUTTON_CLASS } from '@ts/ui/toolbar/constants';
+import type ToolbarMenuList from '@ts/ui/toolbar/internal/toolbar.menu.list';
+import type ToolbarBase from '@ts/ui/toolbar/toolbar.base';
 import {
   applyItemTabIndex,
   closeItemWidget,
@@ -17,8 +17,7 @@ import {
   isItemWidgetOpened,
   isMenuTarget,
   isTextInputTarget,
-} from '../toolbar.utils';
-import type ToolbarMenuList from './toolbar.menu.list';
+} from '@ts/ui/toolbar/toolbar.utils';
 
 const HORIZONTAL_KEY_LOCATION: Record<string, string> = {
   ArrowRight: 'right',

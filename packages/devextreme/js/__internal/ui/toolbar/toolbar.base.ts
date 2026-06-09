@@ -22,17 +22,10 @@ import type { SupportedKeys } from '@ts/core/widget/widget';
 import type { KeyboardKeyDownEvent } from '@ts/events/core/m_keyboard_processor';
 import CollectionWidgetAsync from '@ts/ui/collection/collection_widget.async';
 import type { CollectionItemKey, CollectionWidgetBaseProperties } from '@ts/ui/collection/collection_widget.base';
-
-import {
-  DROPDOWNMENU_BUTTON_CLASS,
-  MENU_CLASS,
-  TOOLBAR_CLASS,
-  TOOLBAR_FOCUS_MODE_CLASS,
-} from './constants';
-import type { FocusRestoreDescriptor } from './internal/keyboard.navigation';
+import type { FocusRestoreDescriptor } from '@ts/ui/toolbar/internal/keyboard.navigation';
 import {
   RovingTabIndexController,
-} from './internal/keyboard.navigation';
+} from '@ts/ui/toolbar/internal/keyboard.navigation';
 import {
   activateMenu,
   closeItemWidget,
@@ -42,7 +35,14 @@ import {
   handleFocusOut,
   isItemWidgetOpened,
   wrapSpaceKey,
-} from './toolbar.utils';
+} from '@ts/ui/toolbar/toolbar.utils';
+
+import {
+  DROPDOWNMENU_BUTTON_CLASS,
+  MENU_CLASS,
+  TOOLBAR_CLASS,
+  TOOLBAR_FOCUS_MODE_CLASS,
+} from './constants';
 
 export const TOOLBAR_BEFORE_CLASS = 'dx-toolbar-before';
 const TOOLBAR_CENTER_CLASS = 'dx-toolbar-center';

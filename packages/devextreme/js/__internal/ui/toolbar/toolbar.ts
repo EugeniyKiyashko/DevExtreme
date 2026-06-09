@@ -2,13 +2,12 @@ import registerComponent from '@js/core/component_registrator';
 import type { dxElementWrapper } from '@js/core/renderer';
 import type { Item } from '@js/ui/toolbar';
 import type { OptionChanged } from '@ts/core/widget/types';
-
-import type { FocusRestoreDescriptor } from './internal/keyboard.navigation';
-import { MultiLineStrategy } from './strategy/toolbar.multiline';
-import { SingleLineStrategy } from './strategy/toolbar.singleline';
-import type { ToolbarBaseProperties } from './toolbar.base';
-import ToolbarBase from './toolbar.base';
-import { toggleItemFocusableElementTabIndex } from './toolbar.utils';
+import type { FocusRestoreDescriptor } from '@ts/ui/toolbar/internal/keyboard.navigation';
+import { MultiLineStrategy } from '@ts/ui/toolbar/strategy/toolbar.multiline';
+import { SingleLineStrategy } from '@ts/ui/toolbar/strategy/toolbar.singleline';
+import type { ToolbarBaseProperties } from '@ts/ui/toolbar/toolbar.base';
+import ToolbarBase from '@ts/ui/toolbar/toolbar.base';
+import { toggleItemFocusableElementTabIndex } from '@ts/ui/toolbar/toolbar.utils';
 
 const TOOLBAR_MULTILINE_CLASS = 'dx-toolbar-multiline';
 const TOOLBAR_AUTO_HIDE_TEXT_CLASS = 'dx-toolbar-text-auto-hide';
