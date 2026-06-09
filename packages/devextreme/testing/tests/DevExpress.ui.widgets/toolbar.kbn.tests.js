@@ -202,14 +202,14 @@ const moduleConfig = {
     },
 };
 
-const createEditorSandwichToolbar = (widget, options) =>
+const createToolbarWithEditorBetweenButtons = (widget, options) =>
     createToolbar([buttonItem('Prev'), editorItem(widget, options), buttonItem('Next')]);
 
 QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
 
     EDITOR_FIXTURES.textInput.forEach(({ widget, options }) => {
         QUnit.test(`${widget}: Enter focuses input`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -221,7 +221,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: arrows blocked while input focused`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -236,7 +236,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: Esc keeps focusedElement on the editor item`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -250,7 +250,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: arrows navigate toolbar after Esc exits the editor`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -265,7 +265,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: enter→exit→arrow cycle preserves single tab stop`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -280,7 +280,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: editor stays unfocused during plain toolbar navigation`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             const $editor = getAvailableItems(toolbar).eq(1).find('.dx-texteditor').first();
@@ -289,7 +289,7 @@ QUnit.module('Enter/Exit: text input editors', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: editor gets dx-state-focused after Enter`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -331,7 +331,7 @@ QUnit.module('Enter/Exit: dropdown/popup editors (matrix)', moduleConfig, functi
         ['Enter', ' ', 'ArrowDown'].forEach((key) => {
             const label = key === ' ' ? 'Space' : key;
             QUnit.test(`${widget}: ${label} opens popup`, function(assert) {
-                const toolbar = createEditorSandwichToolbar(widget, options);
+                const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
                 const $item = key === 'ArrowDown' ? focusItemAt(toolbar, 1) : focusInner(toolbar);
 
                 press(key, getFocusTarget($item).get(0));
@@ -343,7 +343,7 @@ QUnit.module('Enter/Exit: dropdown/popup editors (matrix)', moduleConfig, functi
         });
 
         QUnit.test(`${widget}: arrows blocked while popup is open`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             const $item = focusInner(toolbar);
 
             press('Enter', getFocusTarget($item).get(0));
@@ -357,7 +357,7 @@ QUnit.module('Enter/Exit: dropdown/popup editors (matrix)', moduleConfig, functi
         });
 
         QUnit.test(`${widget}: Esc closes popup and keeps toolbar focus`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             const $item = focusItemAt(toolbar, 1);
             const instance = getInstance($item);
             instance.option('opened', true);
@@ -400,7 +400,7 @@ QUnit.module('Enter/Exit: toggle widgets', moduleConfig, function() {
 
         const enterLabel = toggledByEnter ? 'toggles' : 'does not toggle';
         QUnit.test(`${widget}: Enter ${enterLabel} value`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             const { $widgetEl, widgetInstance } = buildAndFocusInner(toolbar);
             const valueBefore = widgetInstance.option('value');
 
@@ -416,7 +416,7 @@ QUnit.module('Enter/Exit: toggle widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: Space toggles value`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             const { $widgetEl, widgetInstance } = buildAndFocusInner(toolbar);
             const valueBefore = widgetInstance.option('value');
 
@@ -428,7 +428,7 @@ QUnit.module('Enter/Exit: toggle widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: ArrowRight navigates toolbar (no inner edit mode)`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('ArrowRight');
@@ -438,7 +438,7 @@ QUnit.module('Enter/Exit: toggle widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: ArrowLeft navigates toolbar`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('ArrowLeft');
@@ -465,7 +465,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
 
     COLLECTIONS.forEach(({ widget, options, innerFocusableSelector }) => {
         QUnit.test(`${widget}: Enter activates inner navigation`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -479,7 +479,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: arrows do not navigate toolbar while inner mode is active`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -494,7 +494,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: Esc returns focus to the toolbar item`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -508,7 +508,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: arrows navigate toolbar after Esc`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
@@ -522,7 +522,7 @@ QUnit.module('Enter/Exit: collection widgets', moduleConfig, function() {
         });
 
         QUnit.test(`${widget}: enter/exit cycle preserves single tab stop`, function(assert) {
-            const toolbar = createEditorSandwichToolbar(widget, options);
+            const toolbar = createToolbarWithEditorBetweenButtons(widget, options);
             focusItemAt(toolbar, 1);
 
             press('Enter');
