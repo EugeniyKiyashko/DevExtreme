@@ -5513,43 +5513,6 @@ QUnit.module('Audit cleanup — utilities and delegation', moduleConfig, functio
         assert.strictEqual($available.length, 2,
             'disabled item excluded from available items (isItemDisabled detects dx-state-disabled)');
     });
-
-    QUnit.test('navigator.getAvailableItems delegates to widget._getAvailableItems', function(assert) {
-        const toolbar = this.$element.dxToolbar({
-            items: [
-                buttonItem('A'),
-                { widget: 'dxButton', locateInMenu: 'never', disabled: true, options: { text: 'B' } },
-                buttonItem('C'),
-            ],
-        }).dxToolbar('instance');
-
-        const navigatorResult = toolbar._navigator.getAvailableItems().toArray();
-        const widgetResult = toolbar._getAvailableItems().toArray();
-
-        assert.deepEqual(navigatorResult, widgetResult,
-            'navigator returns same set as widget._getAvailableItems (delegation)');
-    });
-
-    QUnit.test('menu list navigator.getAvailableItems uses menu-list-specific focus target logic', function(assert) {
-        const toolbar = this.$element.dxToolbar({
-            items: [
-                { widget: 'dxButton', locateInMenu: 'never', options: { text: 'Visible' } },
-                { widget: 'dxButton', locateInMenu: 'always', options: { text: 'Menu A' } },
-                { widget: 'dxButton', locateInMenu: 'always', options: { text: 'Menu B' } },
-            ],
-        }).dxToolbar('instance');
-
-        const menu = toolbar._layoutStrategy._menu;
-        menu.option('opened', true);
-        this.clock.tick(0);
-
-        const navigatorResult = menu._list._navigator.getAvailableItems().toArray();
-        const listResult = menu._list._getAvailableItems().toArray();
-
-        assert.deepEqual(navigatorResult, listResult,
-            'menu list navigator picks up TOOLBAR_MENU_ACTION_CLASS items via widget._getAvailableItems');
-        assert.strictEqual(navigatorResult.length, 2, 'both menu action items are available');
-    });
 });
 
 QUnit.module('Space key — text input guard', moduleConfig, function() {

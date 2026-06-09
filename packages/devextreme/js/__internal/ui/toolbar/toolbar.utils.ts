@@ -5,9 +5,11 @@ import type { Item } from '@js/ui/toolbar';
 import { getPublicElement } from '@ts/core/m_element';
 import type Widget from '@ts/core/widget/widget';
 import { DISABLED_STATE_CLASS, type SupportedKeys, WIDGET_CLASS } from '@ts/core/widget/widget';
+import eventsEngine from '@ts/events/core/m_events_engine';
 import type { KeyboardKeyDownEvent } from '@ts/events/core/m_keyboard_processor';
 import { BUTTON_GROUP_CLASS } from '@ts/ui/button_group';
 import type { ListBase } from '@ts/ui/list/list.base';
+import { OVERLAY_CONTENT_CLASS } from '@ts/ui/overlay/overlay';
 import { TEXTEDITOR_CLASS, TEXTEDITOR_INPUT_CLASS } from '@ts/ui/text_box/text_editor.base';
 
 import {
@@ -21,36 +23,18 @@ import {
 } from './constants';
 import type Toolbar from './toolbar';
 
-// All `@ts-expect-error` directives below paper over two known core-typing gaps; remove
-// each one as soon as the underlying core type is corrected:
-//   1. `dxElementWrapper.data()` (no-arg) is missing from core/renderer.d.ts — only the
-//      `data(key, value?)` overload is declared, while at runtime jQuery returns the full
-//      data record.
-//   2. `Widget.option(...args): TProperties` (core/widget/component.ts) does not narrow on
-//      single-key reads, and the base `WidgetProperties` does not declare runtime options
-//      contributed by descendants such as dxDropDownButton/dxMenu (e.g. `opened`).
 function getItemElementData($element: dxElementWrapper): Record<string, unknown> {
-  // @ts-expect-error – dxElementWrapper has no zero-arg `data()` overload (core typing gap).
+  // @ts-expect-error
   const data = $element.data() as unknown;
   return (data ?? {}) as Record<string, unknown>;
 }
 
-function isToolbarItemWidgetInstance(value: unknown): value is Widget {
-  return typeof value === 'object'
-    && value !== null
-    && typeof (value as { option?: unknown }).option === 'function';
-}
-
-const getItemInstance = ($element: dxElementWrapper): Widget | undefined => {
+const getItemInstance = ($element: dxElementWrapper): Widget => {
   const itemData = getItemElementData($element);
-  const dxComponents = itemData.dxComponents as string[] | undefined;
+  const dxComponents = itemData?.dxComponents;
   const widgetName = dxComponents?.[0];
-  if (!widgetName) {
-    return undefined;
-  }
 
-  const instance = itemData[widgetName];
-  return isToolbarItemWidgetInstance(instance) ? instance : undefined;
+  return (widgetName && itemData[widgetName]) as Widget;
 };
 
 const getWidgetName = ($element: dxElementWrapper): string => {
@@ -61,6 +45,14 @@ const getWidgetName = ($element: dxElementWrapper): string => {
 function getItemWidget($item: dxElementWrapper): Widget | undefined {
   const $widget = $item.find(TOOLBAR_WIDGETS_SELECTOR).first();
   return $widget.length ? getItemInstance($widget) : undefined;
+}
+
+// Single home for the `opened` typing gap: WidgetProperties does not declare `opened` (it is
+// contributed by descendants such as dxDropDownButton/dxMenu), and core's
+// Widget.option(...args): TProperties also does not narrow on single-key reads.
+function getChildWidgetOpened(instance: Widget | undefined): boolean {
+  // @ts-expect-error – see note above.
+  return !!instance?.option().opened;
 }
 
 export function isTextInputTarget(target: HTMLElement): boolean {
@@ -107,11 +99,7 @@ export function closeItemWidget($item: dxElementWrapper): boolean {
     return false;
   }
 
-  // @ts-expect-error – WidgetProperties does not declare `opened` (added by descendants
-  // like dxDropDownButton/dxMenu); core's Widget.option(...args): TProperties also does
-  // not narrow on single-key reads.
-  const { opened } = itemInstance.option();
-  if (!opened) {
+  if (!getChildWidgetOpened(itemInstance)) {
     return false;
   }
 
@@ -131,10 +119,7 @@ export function isItemDisabled($item: dxElementWrapper, widgetDisabled: boolean)
 }
 
 export function isItemWidgetOpened($item: dxElementWrapper): boolean {
-  // @ts-expect-error – WidgetProperties does not declare `opened` (added by descendants
-  // like dxDropDownButton/dxMenu); core's Widget.option(...args): TProperties also does
-  // not narrow on single-key reads.
-  return !!getItemWidget($item)?.option().opened;
+  return getChildWidgetOpened(getItemWidget($item));
 }
 
 export function getItemFocusTarget($item: dxElementWrapper): dxElementWrapper | undefined {
@@ -267,4 +252,77 @@ export function wrapSpaceKey(keys: SupportedKeys): void {
     }
     return originalSpace.call(this, e, options);
   };
+}
+
+export function getAvailableItems(
+  $visibleItems: dxElementWrapper,
+  widgetDisabled: boolean,
+  resolveFocusTarget: ($item: dxElementWrapper) => dxElementWrapper | undefined,
+): dxElementWrapper {
+  const elements = $visibleItems.toArray().filter(
+    (item) => !isItemDisabled($(item), widgetDisabled)
+      && !!resolveFocusTarget($(item))?.length,
+  );
+
+  return $(elements) as unknown as dxElementWrapper;
+}
+
+export function handleEnterKey(
+  e: DxEvent<KeyboardEvent>,
+  callSuper: (e: DxEvent<KeyboardEvent>) => void,
+  ctx: {
+    focusStateEnabled: boolean | undefined;
+    focusedItem: Element | null | undefined;
+    activateAtNavLevel: (e: DxEvent<KeyboardEvent>) => void;
+  },
+): void {
+  if (!ctx.focusStateEnabled) {
+    callSuper(e);
+    return;
+  }
+
+  const target = e.target as HTMLElement;
+  if (isTextInputTarget(target) || isMenuTarget(target)) {
+    return;
+  }
+
+  ctx.activateAtNavLevel(e);
+  if (e.defaultPrevented) {
+    return;
+  }
+
+  const $item = $(ctx.focusedItem);
+  if ($item.length) {
+    const $textEditor = $item.find(`.${TEXTEDITOR_INPUT_CLASS}`).first();
+    if ($textEditor.length) {
+      e.preventDefault();
+      eventsEngine.trigger($textEditor, 'focus');
+      return;
+    }
+  }
+
+  callSuper(e);
+}
+
+export function handleFocusOut(
+  root: Element | undefined,
+  e: DxEvent,
+  callSuper: (e: DxEvent) => void,
+): void {
+  const { relatedTarget } = e as DxEvent & { relatedTarget: Element };
+  const target = e.target as Element;
+
+  if (relatedTarget && root?.contains(relatedTarget)) {
+    return;
+  }
+
+  if (relatedTarget && $(relatedTarget).closest(`.${OVERLAY_CONTENT_CLASS}`).length) {
+    return;
+  }
+
+  if (target && $(target).closest(`.${OVERLAY_CONTENT_CLASS}`).length) {
+    return;
+  }
+
+  callSuper(e);
 }
