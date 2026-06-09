@@ -1708,7 +1708,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
             'Focus is on first menu item after Enter');
     });
 
-    QUnit.test('Space on overflow button opens menu; first item is focused', function(assert) {
+    QUnit.test('Space on overflow button opens menu', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const $overflowBtn = getOverflowBtn(this.$element);
 
@@ -1720,7 +1720,7 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after Space');
     });
 
-    QUnit.test('ArrowDown/Up navigate inside menu; ArrowRight/Left do not navigate toolbar', function(assert) {
+    QUnit.test('ArrowDown navigates inside menu; ArrowRight does not navigate toolbar', function(assert) {
         const toolbar = makeOverflowToolbar(this.$element);
         const menu = toolbar._layoutStrategy._menu;
 
@@ -2397,7 +2397,7 @@ QUnit.module('Template items', moduleConfig, function() {
         assert.strictEqual($available.length, 2, 'Template item with no focusable content is excluded from navigation');
     });
 
-    QUnit.test('ArrowRight to template item: container gets tabindex=0; _insideActiveItem===false', function(assert) {
+    QUnit.test('ArrowRight to template item sets tabindex=0 and updates focusedElement', function(assert) {
         const toolbar = this.$element.dxToolbar({
             items: [
                 { locateInMenu: 'never', widget: 'dxButton', options: { text: 'A' } },
@@ -2427,7 +2427,7 @@ QUnit.module('Template items', moduleConfig, function() {
         assert.strictEqual($(focusedElement).get(0), $templateItem.get(0), 'focusedElement is template item container');
     });
 
-    QUnit.test('ArrowLeft to template item: container gets tabindex=0; _insideActiveItem===false', function(assert) {
+    QUnit.test('ArrowLeft to template item updates focusedElement', function(assert) {
         const toolbar = this.$element.dxToolbar({
             items: [
                 { locateInMenu: 'never', widget: 'dxButton', options: { text: 'A' } },
@@ -2450,7 +2450,7 @@ QUnit.module('Template items', moduleConfig, function() {
         assert.strictEqual($(focusedElement).get(0), $templateItem.get(0), 'ArrowLeft moved focus to template item');
     });
 
-    QUnit.test('ArrowLeft/Right while template container is focused navigate toolbar', function(assert) {
+    QUnit.test('ArrowRight while template container is focused navigates toolbar', function(assert) {
         const toolbar = this.$element.dxToolbar({
             items: [
                 { locateInMenu: 'never', widget: 'dxButton', options: { text: 'A' } },
@@ -3165,7 +3165,7 @@ QUnit.module('Template items', moduleConfig, function() {
             'second inner button has tabindex=-1 before activation');
     });
 
-    QUnit.test('template with multiple focusable: ArrowRight/Left inside activated mode do NOT navigate toolbar', function(assert) {
+    QUnit.test('template with multiple focusable: ArrowRight inside activated mode does NOT navigate toolbar', function(assert) {
 
         const toolbar = this.$element.dxToolbar({
             items: [
