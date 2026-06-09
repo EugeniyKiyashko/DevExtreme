@@ -82,8 +82,6 @@ const editorItem = (widget, options = {}, extra = {}) => ({
     options,
 });
 
-const labelItem = (text) => ({ text, locateInMenu: 'never' });
-
 const overflowButtonItem = (text, extra = {}) => ({
     widget: 'dxButton',
     locateInMenu: 'always',
@@ -1783,7 +1781,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         this.clock.tick(TICK_DELAY.instant);
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const list = getOverflowList(menu);
         const $firstItem = getOverflowListItems(menu).first();
         const $focusTarget = findFocusTarget($firstItem);
         press('Escape', $focusTarget.get(0));
@@ -1888,7 +1885,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         menu.openWithFocus('first');
         this.clock.tick(TICK_DELAY.instant);
 
-        const list = getOverflowList(menu);
         const $firstItem = getOverflowListItems(menu).first();
         press('Escape', findFocusTarget($firstItem).get(0));
         this.clock.tick(TICK_DELAY.instant);
@@ -1918,7 +1914,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu opened via ArrowDown');
 
-        const list = getOverflowList(menu);
         const $firstItem = getOverflowListItems(menu).first();
         const $focusTarget = findFocusTarget($firstItem);
         assert.strictEqual(
@@ -1939,7 +1934,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu opened via ArrowUp');
 
-        const list = getOverflowList(menu);
         const $items = getOverflowListItems(menu);
         const $lastItem = $items.last();
         const $focusTarget = findFocusTarget($lastItem);
@@ -2072,7 +2066,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu opened');
 
-        const list = getOverflowList(menu);
         const $items = getOverflowListItems(menu);
         assert.strictEqual($items.length, 1, 'Only 1 non-disabled item available');
 
@@ -2151,7 +2144,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         menu.openWithFocus('first');
         this.clock.tick(TICK_DELAY.instant);
 
-        const list = getOverflowList(menu);
         const $items = getOverflowListItems(menu);
         press('ArrowDown', findFocusTarget($items.first()).get(0));
         this.clock.tick(TICK_DELAY.instant);
@@ -2168,7 +2160,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         menu.openWithFocus('first');
         this.clock.tick(TICK_DELAY.instant);
 
-        const list = getOverflowList(menu);
         const $items = getOverflowListItems(menu);
         press('ArrowDown', findFocusTarget($items.first()).get(0));
         this.clock.tick(TICK_DELAY.instant);
@@ -2191,7 +2182,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
 
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after click');
 
-        const list = getOverflowList(menu);
         const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
@@ -2210,7 +2200,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         this.clock.tick(TICK_DELAY.instant);
 
         const popupContent = getOverflowPopupContent(menu).get(0);
-        const list = getOverflowList(menu);
         const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
@@ -2234,7 +2223,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         this.clock.tick(TICK_DELAY.instant);
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened');
 
-        const list = getOverflowList(menu);
         const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
@@ -2264,7 +2252,6 @@ QUnit.module('Overflow menu', moduleConfig, function() {
         this.clock.tick(TICK_DELAY.instant);
         assert.strictEqual(menu.option('opened'), true, 'Menu is opened after Enter');
 
-        const list = getOverflowList(menu);
         const $firstFocusTarget = findFocusTarget(getOverflowListItems(menu).first());
 
         assert.strictEqual(
