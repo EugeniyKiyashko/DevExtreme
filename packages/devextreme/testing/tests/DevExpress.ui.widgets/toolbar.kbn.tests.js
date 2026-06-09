@@ -3201,7 +3201,7 @@ QUnit.module('Template items', moduleConfig, function() {
     });
 });
 
-QUnit.module('Extra — Core behaviors', moduleConfig, function() {
+QUnit.module('Core behaviors', moduleConfig, function() {
     QUnit.test('exactly one tabindex=0 exists inside toolbar at all times', function(assert) {
         this.$element.dxToolbar({
             items: [
@@ -5540,5 +5540,136 @@ QUnit.module('Space key — text input guard', moduleConfig, function() {
 
         assert.strictEqual(clicked, true, 'Space on dxButton still fires click');
         assert.strictEqual(event.defaultPrevented, true, 'Space is still prevented on dxButton (prevents page scroll)');
+    });
+});
+
+QUnit.module('Legacy KBN', moduleConfig, function() {
+
+    const legacyToolbar = (items, extra = {}) =>
+        createToolbar(items, { allowKeyboardNavigation: false, ...extra });
+
+    QUnit.test('no tabindex=-1 — every item stays in the native tab order', function(assert) {
+        legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+
+        assert.strictEqual(this.$element.find('[tabindex="-1"]').length, 0,
+            'no element has tabindex=-1 in legacy mode');
+    });
+
+    QUnit.test('each button item keeps its natural tabindex=0 — multiple tab stops', function(assert) {
+        legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+
+        const $buttons = this.$element.find('.dx-button');
+        const naturalCount = $buttons.toArray().filter(
+            (el) => $(el).attr('tabindex') === '0' || $(el).attr('tabindex') === undefined
+        ).length;
+
+        assert.strictEqual(naturalCount, 3,
+            'all 3 buttons have natural tabindex — roving is not applied');
+    });
+
+    QUnit.test('ArrowRight on a focused button does not move browser focus to the next item', function(assert) {
+        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const $btn = findFocusTarget(focusItemAt(toolbar, 0));
+        const elementBefore = getActiveElement();
+
+        press('ArrowRight', $btn.get(0));
+        this.clock.tick(TICK_DELAY.instant);
+
+        assert.strictEqual(getActiveElement(), elementBefore,
+            'browser focus stays on original button after ArrowRight in legacy mode');
+    });
+
+    QUnit.test('ArrowLeft on a focused button does not move browser focus to the previous item', function(assert) {
+        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const $btn = findFocusTarget(focusItemAt(toolbar, 2));
+        const elementBefore = getActiveElement();
+
+        press('ArrowLeft', $btn.get(0));
+        this.clock.tick(TICK_DELAY.instant);
+
+        assert.strictEqual(getActiveElement(), elementBefore,
+            'browser focus stays on original button after ArrowLeft in legacy mode');
+    });
+
+    QUnit.test('Home and End keys do not move browser focus from the focused button', function(assert) {
+        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const $btn = findFocusTarget(focusItemAt(toolbar, 1));
+
+        press('Home', $btn.get(0));
+        this.clock.tick(TICK_DELAY.instant);
+        assert.strictEqual(getActiveElement(), $btn.get(0), 'Home does not move browser focus');
+
+        press('End', $btn.get(0));
+        this.clock.tick(TICK_DELAY.instant);
+        assert.strictEqual(getActiveElement(), $btn.get(0), 'End does not move browser focus');
+    });
+
+    QUnit.test('ArrowDown and ArrowUp do not move browser focus from the focused button', function(assert) {
+        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const $btn = findFocusTarget(focusItemAt(toolbar, 1));
+
+        press('ArrowDown', $btn.get(0));
+        this.clock.tick(TICK_DELAY.instant);
+        assert.strictEqual(getActiveElement(), $btn.get(0), 'ArrowDown does not move browser focus');
+
+        press('ArrowUp', $btn.get(0));
+        this.clock.tick(TICK_DELAY.instant);
+        assert.strictEqual(getActiveElement(), $btn.get(0), 'ArrowUp does not move browser focus');
+    });
+
+    const setupLegacyTabsToolbar = () => {
+        const tabsItem = editorItem('dxTabs', {
+            items: [{ text: 'Home' }, { text: 'Insert' }, { text: 'Layout' }],
+            selectedIndex: 0,
+            width: 'auto',
+        });
+        return createToolbar(
+            [buttonItem('Prev'), tabsItem, buttonItem('Next')],
+            { allowKeyboardNavigation: false },
+        );
+    };
+
+    const focusTabs = (toolbar, clock) => {
+        const $tabs = toolbar._getAvailableItems().eq(1).find('.dx-tabs');
+        $tabs.get(0).focus();
+        clock.tick(TICK_DELAY.focus);
+        return $tabs;
+    };
+
+    QUnit.test('ArrowRight on focused dxTabs advances selectedIndex', function(assert) {
+        const toolbar = setupLegacyTabsToolbar();
+        const $tabs = focusTabs(toolbar, this.clock);
+
+        press('ArrowRight', $tabs.get(0));
+        this.clock.tick(TICK_DELAY.focus);
+
+        assert.strictEqual($tabs.dxTabs('option', 'selectedIndex'), 1,
+            'ArrowRight is forwarded to dxTabs and advances selectedIndex in legacy mode');
+    });
+
+    QUnit.test('ArrowLeft on focused dxTabs decreases selectedIndex', function(assert) {
+        const toolbar = setupLegacyTabsToolbar();
+        const $tabs = focusTabs(toolbar, this.clock);
+        $tabs.dxTabs('option', 'selectedIndex', 2);
+
+        press('ArrowLeft', $tabs.get(0));
+        this.clock.tick(TICK_DELAY.focus);
+
+        assert.strictEqual($tabs.dxTabs('option', 'selectedIndex'), 1,
+            'ArrowLeft is forwarded to dxTabs and decreases selectedIndex in legacy mode');
+    });
+
+    QUnit.test('ArrowRight on focused dxTabs does not move browser focus outside of dxTabs', function(assert) {
+        const toolbar = setupLegacyTabsToolbar();
+        const $tabs = focusTabs(toolbar, this.clock);
+
+        press('ArrowRight', $tabs.get(0));
+        this.clock.tick(TICK_DELAY.focus);
+
+        assert.strictEqual(
+            $tabs.get(0) === getActiveElement() || $tabs.get(0).contains(getActiveElement()),
+            true,
+            'browser focus stays inside dxTabs after ArrowRight in legacy mode',
+        );
     });
 });
