@@ -721,7 +721,6 @@ class Popup<
       disabled,
       rtlEnabled,
       items,
-      focusStateEnabled: false,
       allowKeyboardNavigation: false,
       useDefaultButtons: useDefaultToolbarButtons,
       useFlatButtons: useFlatToolbarButtons,

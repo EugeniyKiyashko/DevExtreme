@@ -69,8 +69,6 @@ export class RovingTabIndexController {
   }
 
   private getItemIndex($item: dxElementWrapper): number | undefined {
-    // `$.data` getter is typed as returning `this` in the local d.ts (only the setter
-    // overload is declared), so we go through `unknown` to assert the actual stored type.
     const index = $item.data(this.host._itemIndexKey()) as unknown as number | undefined;
     return typeof index === 'number' ? index : undefined;
   }
@@ -329,11 +327,6 @@ export class RovingTabIndexController {
     }
   }
 
-  // NOTE: tri-state result consumed before a full re-render:
-  // - descriptor: DOM focus was on a toolbar item -> remember it for restore;
-  // - null: focus moved to a real element outside the toolbar -> drop pending state;
-  // - undefined: navigation disabled or focus on body/null -> keep pending state intact
-  //   (a nested re-render may run after the item DOM was already cleaned).
   captureFocusedItem(): FocusRestoreDescriptor | null | undefined {
     if (!this.options.isEnabled()) {
       return undefined;
@@ -344,9 +337,6 @@ export class RovingTabIndexController {
     const insideToolbar = !!active && active !== root && root.contains(active);
 
     if (!insideToolbar) {
-      // Focus on body/null (e.g. the focused item was removed mid re-render) keeps the
-      // pending state, so a nested re-render does not lose the original capture. Focus on
-      // any other real element means the user moved away -> drop the pending state.
       const body = domAdapter.getBody();
       return active && active !== body ? null : undefined;
     }
@@ -362,9 +352,6 @@ export class RovingTabIndexController {
     };
   }
 
-  // Returns a descriptor for $item only if it currently owns DOM focus — e.g. the focused
-  // item is being disabled in place (an incremental option('items[n].disabled', true), not a
-  // full re-render). The caller restores focus onto an adjacent enabled item afterwards.
   captureItemIfFocused($item: dxElementWrapper): FocusRestoreDescriptor | undefined {
     if (!this.options.isEnabled() || !$item?.length) {
       return undefined;
@@ -398,9 +385,6 @@ export class RovingTabIndexController {
       return;
     }
 
-    // NOTE: updateRovingTabIndex moves the single tab stop from the reset default
-    // (first item) onto the restored target before focus, so there is never a moment
-    // with two tab stops, regardless of whether focusin fires synchronously.
     this.updateRovingTabIndex($target);
     this.focusItem($target);
   }

@@ -3,6 +3,7 @@ import $ from '@js/core/renderer';
 import type { DxEvent } from '@js/events';
 import type { Item } from '@js/ui/toolbar';
 import { getPublicElement } from '@ts/core/m_element';
+import { getComponentInstance } from '@ts/core/utils/m_public_component';
 import type Widget from '@ts/core/widget/widget';
 import { DISABLED_STATE_CLASS, type SupportedKeys, WIDGET_CLASS } from '@ts/core/widget/widget';
 import eventsEngine from '@ts/events/core/m_events_engine';
@@ -29,14 +30,6 @@ function getItemElementData($element: dxElementWrapper): Record<string, unknown>
   return (data ?? {}) as Record<string, unknown>;
 }
 
-const getItemInstance = ($element: dxElementWrapper): Widget => {
-  const itemData = getItemElementData($element);
-  const dxComponents = itemData?.dxComponents;
-  const widgetName = dxComponents?.[0];
-
-  return (widgetName && itemData[widgetName]) as Widget;
-};
-
 const getWidgetName = ($element: dxElementWrapper): string => {
   const dxComponents = getItemElementData($element).dxComponents as string[] | undefined;
   return dxComponents?.[0] ?? '';
@@ -44,7 +37,7 @@ const getWidgetName = ($element: dxElementWrapper): string => {
 
 function getItemWidget($item: dxElementWrapper): Widget | undefined {
   const $widget = $item.find(TOOLBAR_WIDGETS_SELECTOR).first();
-  return $widget.length ? getItemInstance($widget) : undefined;
+  return $widget.length ? getComponentInstance<Widget>($widget) : undefined;
 }
 
 // Single home for the `opened` typing gap: WidgetProperties does not declare `opened` (it is
@@ -135,7 +128,7 @@ export function getItemFocusTarget($item: dxElementWrapper): dxElementWrapper | 
   }
 
   const $widget = $widgets.first();
-  const itemInstance = getItemInstance($widget);
+  const itemInstance = getComponentInstance<Widget>($widget);
 
   if (!itemInstance) {
     return undefined;
@@ -212,7 +205,7 @@ export function toggleItemFocusableElementTabIndex(
   if (widget && TOOLBAR_ITEMS.includes(widget)) {
     const $widget = $item.find(widget.toLowerCase().replace('dx', '.dx-'));
     if ($widget.length) {
-      const itemInstance = getItemInstance($widget);
+      const itemInstance = getComponentInstance<Widget>($widget);
 
       if (!itemInstance) {
         return;
