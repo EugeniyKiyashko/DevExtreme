@@ -22,6 +22,20 @@ import type { SupportedKeys } from '@ts/core/widget/widget';
 import type { KeyboardKeyDownEvent } from '@ts/events/core/m_keyboard_processor';
 import CollectionWidgetAsync from '@ts/ui/collection/collection_widget.async';
 import type { CollectionItemKey, CollectionWidgetBaseProperties } from '@ts/ui/collection/collection_widget.base';
+import type { FocusRestoreDescriptor } from '@ts/ui/toolbar/internal/keyboard.navigation';
+import {
+  RovingTabIndexController,
+} from '@ts/ui/toolbar/internal/keyboard.navigation';
+import {
+  activateMenu,
+  closeItemWidget,
+  getAvailableItems,
+  getItemFocusTarget,
+  handleEnterKey,
+  handleFocusOut,
+  isItemWidgetOpened,
+  wrapSpaceKey,
+} from '@ts/ui/toolbar/toolbar.utils';
 
 import {
   DROPDOWNMENU_BUTTON_CLASS,
@@ -29,21 +43,6 @@ import {
   TOOLBAR_CLASS,
   TOOLBAR_FOCUS_MODE_CLASS,
 } from './constants';
-import type { FocusRestoreDescriptor } from './internal/keyboard.navigation';
-import {
-  enterKeyHandler,
-  focusItemWidget,
-  focusOutHandler,
-  getAvailableItems,
-  RovingTabIndexNavigator,
-} from './internal/keyboard.navigation';
-import {
-  activateMenu,
-  closeItemWidget,
-  getItemFocusTarget,
-  isItemWidgetOpened,
-  wrapSpaceKey,
-} from './toolbar.utils';
 
 export const TOOLBAR_BEFORE_CLASS = 'dx-toolbar-before';
 const TOOLBAR_CENTER_CLASS = 'dx-toolbar-center';
@@ -94,7 +93,7 @@ class ToolbarBase<
 
   _waitParentAnimationTimeout?: ReturnType<typeof setTimeout>;
 
-  _navigator?: RovingTabIndexNavigator;
+  _navigator?: RovingTabIndexController;
 
   _pendingFocusDescriptor?: FocusRestoreDescriptor;
 
@@ -220,7 +219,11 @@ class ToolbarBase<
   }
 
   _enterKeyHandler(e: DxEvent<KeyboardEvent>): void {
-    enterKeyHandler(this._getContext(), e, (evt) => super._enterKeyHandler(evt));
+    handleEnterKey(e, (evt) => super._enterKeyHandler(evt), {
+      focusStateEnabled: this.option().focusStateEnabled,
+      focusedItem: this.option().focusedElement,
+      activateAtNavLevel: (evt) => this._handleActivationAtNavLevel(evt),
+    });
   }
 
   _setFocusedItem($target: dxElementWrapper): void {
@@ -230,19 +233,24 @@ class ToolbarBase<
   }
 
   _focusOutHandler(e: DxEvent): void {
-    focusOutHandler(this._getContext(), e, (evt) => super._focusOutHandler(evt));
+    handleFocusOut(this.$element().get(0), e, (evt) => super._focusOutHandler(evt));
   }
 
   _focusItemWidget($item: dxElementWrapper): void {
-    focusItemWidget(this._getContext(), $item);
+    const $focusTarget = this._getItemFocusTarget($item);
+    ($focusTarget?.get(0) as HTMLElement | undefined)?.focus();
   }
 
   _getAvailableItems($itemElements?: dxElementWrapper): dxElementWrapper {
-    return getAvailableItems(this._getContext(), $itemElements);
+    return getAvailableItems(
+      this._getVisibleItems($itemElements),
+      !!this.option().disabled,
+      ($item) => this._getItemFocusTarget($item),
+    );
   }
 
   _focusInHandler(e: DxEvent): void {
-    this._navigator?.focusInHandler(this._getContext(), e);
+    this._navigator?.focusInHandler(e);
   }
 
   _renderFocusTarget(): void {
@@ -260,31 +268,23 @@ class ToolbarBase<
   _attachKeyboardEvents(): void {
     this._detachKeyboardEvents();
 
+    this._keyboardListenerId = keyboard.on(
+      this._keyboardEventBindingTarget(),
+      null,
+      (opts: KeyboardKeyDownEvent) => this._keyboardHandler(opts),
+    );
+
     const { allowKeyboardNavigation } = this.option();
     if (!allowKeyboardNavigation) {
-      this._keyboardListenerId = keyboard.on(
-        this._keyboardEventBindingTarget(),
-        null,
-        (opts: KeyboardKeyDownEvent) => this._keyboardHandler(opts),
-      );
       return;
     }
 
-    this._navigator = new RovingTabIndexNavigator({
-      component: this._getContext(),
+    this._navigator = new RovingTabIndexController(this, {
       itemsSelector: `${this._itemSelector()}, .${DROPDOWNMENU_BUTTON_CLASS}`,
       direction: 'horizontal',
-      isEnabled: (): boolean => {
-        const { allowKeyboardNavigation: enabled } = this.option();
-        return !!enabled;
-      },
+      isEnabled: (): boolean => !!this.option().allowKeyboardNavigation,
     });
     this._navigator.attach();
-  }
-
-  _getContext(): ToolbarBase {
-    // @ts-expect-error ts-error
-    return this;
   }
 
   _detachKeyboardEvents(): void {

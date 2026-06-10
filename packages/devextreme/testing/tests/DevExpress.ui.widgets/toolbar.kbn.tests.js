@@ -49,6 +49,7 @@ import 'ui/switch';
 import 'ui/check_box';
 import 'ui/menu';
 import 'ui/tabs';
+import 'ui/drop_down_editor/ui.drop_down_editor';
 
 import 'fluent_blue_light.css!';
 
@@ -5559,5 +5560,125 @@ QUnit.module('Legacy KBN', moduleConfig, function() {
             true,
             'browser focus stays inside dxTabs after ArrowRight in legacy mode',
         );
+    });
+});
+
+QUnit.module('APG toolbar inside drop-down popup — focus entry (unwrap to inner input)', {
+    beforeEach: function() {
+        fx.off = true;
+        this.clock = sinon.useFakeTimers();
+        this.$element = $(TOOLBAR_SELECTOR);
+
+        this.setup = ({ allowKeyboardNavigation, items }) => {
+            const $toolbar = $('<div>');
+            const toolbar = $toolbar.dxToolbar({ allowKeyboardNavigation, items }).dxToolbar('instance');
+
+            const editor = this.$element.dxDropDownEditor({
+                focusStateEnabled: true,
+                opened: true,
+                dropDownOptions: {
+                    contentTemplate: () => $toolbar,
+                },
+            }).dxDropDownEditor('instance');
+
+            const $container = $toolbar.find('.dx-texteditor').first();
+            return {
+                editor,
+                toolbar,
+                $field: this.$element.find('.dx-texteditor-input').first(),
+                $container,
+                $innerInput: $container.find('.dx-texteditor-input').first(),
+            };
+        };
+
+        this.pressTabOnField = ($field, shiftKey = false) => {
+            $field.focus().trigger($.Event('keydown', { key: 'Tab', shiftKey }));
+            this.clock.tick(50);
+        };
+    },
+    afterEach: function() {
+        fx.off = false;
+        this.clock.restore();
+        const editor = this.$element.data('dxDropDownEditor');
+        if(editor) {
+            editor.dispose();
+        }
+    },
+}, () => {
+    const TEXTBOX_ITEM = { widget: 'dxTextBox', locateInMenu: 'never', options: { value: 'hello' } };
+
+    QUnit.test('precondition: APG toolbar puts the tab stop on the .dx-texteditor container, input is tabindex=-1', function(assert) {
+        const { $container, $innerInput } = this.setup({
+            allowKeyboardNavigation: true,
+            items: [TEXTBOX_ITEM],
+        });
+
+        assert.strictEqual($container.attr('tabindex'), '0',
+            'editor container is the roving tab stop (tabindex=0)');
+        assert.strictEqual($innerInput.attr('tabindex'), '-1',
+            'inner input is removed from the tab order (tabindex=-1)');
+    });
+
+    QUnit.test('first popup focusable is the container, but Tab focuses the inner input', function(assert) {
+        const { editor, $field, $container, $innerInput } = this.setup({
+            allowKeyboardNavigation: true,
+            items: [TEXTBOX_ITEM],
+        });
+
+        assert.strictEqual(editor._getFirstPopupElement().get(0), $container.get(0),
+            'popup reports the .dx-texteditor container as its focusable element');
+
+        this.pressTabOnField($field);
+
+        assert.strictEqual(getActiveElement(), $innerInput.get(0),
+            'Tab unwraps the container and focuses the inner input');
+    });
+
+    QUnit.test('last popup focusable is the container, but Shift+Tab focuses the inner input', function(assert) {
+        const { editor, $field, $container, $innerInput } = this.setup({
+            allowKeyboardNavigation: true,
+            items: [TEXTBOX_ITEM],
+        });
+
+        assert.strictEqual(editor._getLastPopupElement().get(0), $container.get(0),
+            'popup reports the .dx-texteditor container as its last focusable element');
+
+        this.pressTabOnField($field, true);
+
+        assert.strictEqual(getActiveElement(), $innerInput.get(0),
+            'Shift+Tab unwraps the container and focuses the inner input');
+    });
+
+    QUnit.test('non-APG toolbar (allowKeyboardNavigation:false): tab stop stays on the input, Tab focuses it directly (fallback, no regression)', function(assert) {
+        const { editor, $field, $container, $innerInput } = this.setup({
+            allowKeyboardNavigation: false,
+            items: [TEXTBOX_ITEM],
+        });
+
+        assert.notStrictEqual($container.attr('tabindex'), '0',
+            'container is NOT a tab stop without keyboard navigation');
+        assert.strictEqual(editor._getFirstPopupElement().get(0), $innerInput.get(0),
+            'popup reports the input itself as its focusable element');
+
+        this.pressTabOnField($field);
+
+        assert.strictEqual(getActiveElement(), $innerInput.get(0),
+            'Tab focuses the input directly via the fallback branch ($input is empty -> $focusTarget = $focusableElement)');
+    });
+
+    QUnit.test('Tab with a non-editor roving item (dxButton) focuses the element itself (no unwrap)', function(assert) {
+        const { editor, $field } = this.setup({
+            allowKeyboardNavigation: true,
+            items: [buttonItem('Action')],
+        });
+
+        const $button = editor._getFirstPopupElement();
+        assert.ok($button.hasClass('dx-button'), 'popup focusable is the button (roving tab stop)');
+        assert.notOk($button.hasClass('dx-texteditor'), 'button is not a text editor');
+
+        this.pressTabOnField($field);
+
+        assert.strictEqual(getActiveElement(), $button.get(0),
+            'Tab focuses the button itself — unwrap branch is skipped for non-editor items');
     });
 });

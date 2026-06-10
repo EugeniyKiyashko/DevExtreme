@@ -1,4 +1,5 @@
 import type { ToolbarItemComponent } from '@js/common';
+import { keyboard } from '@js/common/core/events/short';
 import type { DataSourceOptions } from '@js/common/data';
 import type { dxElementWrapper } from '@js/core/renderer';
 import $ from '@js/core/renderer';
@@ -8,20 +9,20 @@ import type { Item } from '@js/ui/toolbar';
 import { getPublicElement } from '@ts/core/m_element';
 import type { ActionConfig } from '@ts/core/widget/component';
 import type { SupportedKeys } from '@ts/core/widget/widget';
+import type { KeyboardKeyDownEvent } from '@ts/events/core/m_keyboard_processor';
 import type { ItemRenderInfo, ItemTemplate } from '@ts/ui/collection/collection_widget.base';
 import { ListBase } from '@ts/ui/list/list.base';
 import { MENU_CLASS } from '@ts/ui/toolbar/constants';
 import {
-  enterKeyHandler,
-  focusItemWidget,
-  focusOutHandler,
-  getAvailableItems,
-  RovingTabIndexNavigator,
+  RovingTabIndexController,
 } from '@ts/ui/toolbar/internal/keyboard.navigation';
 import {
   activateMenu,
   closeItemWidget,
+  getAvailableItems,
   getItemFocusTarget,
+  handleEnterKey,
+  handleFocusOut,
   isItemWidgetOpened,
   wrapSpaceKey,
 } from '@ts/ui/toolbar/toolbar.utils';
@@ -36,7 +37,7 @@ const SCROLLVIEW_CONTENT_CLASS = 'dx-scrollview-content';
 
 type ActionableComponents = Extract<ToolbarItemComponent, 'dxButton' | 'dxButtonGroup'>;
 export default class ToolbarMenuList extends ListBase {
-  _navigator?: RovingTabIndexNavigator;
+  _navigator?: RovingTabIndexController;
 
   _onEscapePress?: () => void;
 
@@ -194,17 +195,20 @@ export default class ToolbarMenuList extends ListBase {
       return;
     }
 
-    this._navigator = new RovingTabIndexNavigator({
-      component: this,
+    // Framework keyboard path (space/enter via _supportedKeys), with focusTarget=null so
+    // item-level keydowns bubbling to the root are processed.
+    this._keyboardListenerId = keyboard.on(
+      this._keyboardEventBindingTarget(),
+      null,
+      (opts: KeyboardKeyDownEvent) => this._keyboardHandler(opts),
+    );
+
+    this._navigator = new RovingTabIndexController(this, {
       itemsSelector: this._itemSelector(),
       direction: 'vertical',
-      getItemFocusTarget: ($item): dxElementWrapper => this._getItemFocusTarget($item),
-      onEscapeKey: (): void => this._onEscapePress?.(),
-      onTabKey: (): void => this._onTabPress?.(),
-      isEnabled: (): boolean => {
-        const { focusStateEnabled: enabled } = this.option();
-        return !!enabled;
-      },
+      isEnabled: (): boolean => !!this.option().focusStateEnabled,
+      onEscape: (): void => this._onEscapePress?.(),
+      onTab: (): void => this._onTabPress?.(),
     });
     this._navigator.attach();
   }
@@ -220,7 +224,11 @@ export default class ToolbarMenuList extends ListBase {
   }
 
   _enterKeyHandler(e: DxEvent<KeyboardEvent>): void {
-    enterKeyHandler(this, e, (evt) => super._enterKeyHandler(evt));
+    handleEnterKey(e, (evt) => super._enterKeyHandler(evt), {
+      focusStateEnabled: this.option().focusStateEnabled,
+      focusedItem: this.option().focusedElement,
+      activateAtNavLevel: (evt) => this._handleActivationAtNavLevel(evt),
+    });
   }
 
   _setFocusedItem($target: dxElementWrapper): void {
@@ -230,19 +238,24 @@ export default class ToolbarMenuList extends ListBase {
   }
 
   _focusOutHandler(e: DxEvent): void {
-    focusOutHandler(this, e, (evt) => super._focusOutHandler(evt));
+    handleFocusOut(this.$element().get(0), e, (evt) => super._focusOutHandler(evt));
   }
 
   _focusItemWidget($item: dxElementWrapper): void {
-    focusItemWidget(this, $item);
+    const $focusTarget = this._getItemFocusTarget($item);
+    ($focusTarget.get(0) as HTMLElement | undefined)?.focus();
   }
 
   _getAvailableItems($itemElements?: dxElementWrapper): dxElementWrapper {
-    return getAvailableItems(this, $itemElements);
+    return getAvailableItems(
+      this._getVisibleItems($itemElements),
+      !!this.option().disabled,
+      ($item) => this._getItemFocusTarget($item),
+    );
   }
 
   _focusInHandler(e: DxEvent): void {
-    this._navigator?.focusInHandler(this, e);
+    this._navigator?.focusInHandler(e);
   }
 
   _resetRovingTabIndex(): void {

@@ -12,3 +12,6 @@ export const TOOLBAR_SEPARATOR_CLASS = 'dx-toolbar-separator';
 export const TOOLBAR_ITEMS = ['dxAutocomplete', 'dxButton', 'dxCheckBox', 'dxDateBox', 'dxDateRangeBox', 'dxMenu', 'dxSelectBox', 'dxSwitch', 'dxTabs', 'dxTextBox', 'dxButtonGroup', 'dxDropDownButton'] as const;
 export const TOOLBAR_WIDGETS_SELECTOR = TOOLBAR_ITEMS.map((w) => w.toLowerCase().replace('dx', '.dx-')).join(',');
 export const NATIVE_FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]';
+
+export const TEXTEDITOR_CLASS = 'dx-texteditor';
+export const TEXTEDITOR_INPUT_CLASS = 'dx-texteditor-input';

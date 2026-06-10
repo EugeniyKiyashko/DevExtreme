@@ -33,13 +33,14 @@ import type { Properties } from '@js/ui/drop_down_editor/ui.drop_down_editor';
 import type { InitializedEvent as PopupInitializedEvent, Properties as PopupProperties, ToolbarItem } from '@js/ui/popup';
 import Popup from '@js/ui/popup/ui.popup';
 import errors from '@js/ui/widget/ui.errors';
-import Widget from '@js/ui/widget/ui.widget';
+import { getComponentInstance } from '@ts/core/utils/m_public_component';
 import { focused } from '@ts/core/utils/m_selectors';
 import type { OptionChanged } from '@ts/core/widget/types';
+import Widget from '@ts/core/widget/widget';
 import type { PositioningEvent } from '@ts/ui/overlay/overlay';
 import TextBox from '@ts/ui/text_box/text_box';
 
-import type Popover from '../popover/m_popover';
+import type Popover from '../popover/popover';
 import type { TextEditorButtonInfo } from '../text_box/texteditor_button_collection/index';
 import DropDownButton from './drop_down_button';
 import { getElementWidth } from './utils';
@@ -176,8 +177,8 @@ class DropDownEditor<
           : this._getFirstPopupElement();
 
         if ($focusableElement) {
-          const $input = $focusableElement.hasClass('dx-texteditor') ? $focusableElement.find('.dx-texteditor-input').first() : $();
-          const $focusTarget = $input.length ? $input : $focusableElement;
+          const $target = getComponentInstance<Widget>($focusableElement)?._focusTarget?.();
+          const $focusTarget = $target?.length ? $target : $focusableElement;
           // @ts-expect-error ts-error should be added on EventsEngine level
           eventsEngine.trigger($focusTarget, 'focus');
           // @ts-expect-error ts-error should be added on dxElementWrapper level
@@ -910,7 +911,7 @@ class DropDownEditor<
       toolbarItems: this._getPopupToolbarItems(),
       onPositioned: this._popupPositionedHandler.bind(this),
       fullScreen: false,
-      // @ts-expect-error should be added on Popup level
+      // @ts-expect-error Should be updated on public PopupProperties level
       contentTemplate: null,
       _hideOnParentScrollTarget: this.$element(),
       _wrapperClassExternal: DROP_DOWN_EDITOR_OVERLAY,
@@ -1041,8 +1042,7 @@ class DropDownEditor<
     super._clean();
   }
 
-  _setPopupOption(...args: [string, unknown?]): void {
-    // @ts-expect-error Should be fixed on Widget level
+  _setPopupOption(...args: [string, unknown?] | [Record<string, unknown>]): void {
     this._setWidgetOption('_popup', args);
   }
 
@@ -1128,7 +1128,6 @@ class DropDownEditor<
   }
 
   _popupOptionChanged(args: OptionChanged<TProperties>): void {
-    // @ts-expect-error Add getOptionsFromContainer static method to Widget
     const options = Widget.getOptionsFromContainer(args);
 
     this._setPopupOption(options);
