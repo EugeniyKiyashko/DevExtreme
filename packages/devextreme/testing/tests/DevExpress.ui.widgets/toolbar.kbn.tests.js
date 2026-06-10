@@ -4925,7 +4925,6 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         const descriptor = nav.captureFocusedItem();
         assert.strictEqual(!!(descriptor && typeof descriptor === 'object'), true, 'focus on item yields a descriptor');
         assert.strictEqual(descriptor.index, 0, 'descriptor.index is the focused item index');
-        assert.strictEqual(descriptor.overflow, false, 'descriptor.overflow is false for a normal item');
 
         const outside = $('<button type="button">').appendTo('#qunit-fixture').get(0);
         outside.focus();

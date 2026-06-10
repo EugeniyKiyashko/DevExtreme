@@ -46,7 +46,6 @@ export interface RovingTabIndexOptions {
 
 export interface FocusRestoreDescriptor {
   index: number | undefined;
-  overflow: boolean;
 }
 
 export class RovingTabIndexController {
@@ -64,13 +63,16 @@ export class RovingTabIndexController {
   }
 
   private getItemTabIndex($item: dxElementWrapper): number {
-    const data = this.host._getItemData($item) as { options?: { tabIndex?: number } } | undefined;
-    return data?.options?.tabIndex ?? 0;
+    const data = this.host._getItemData($item);
+    const tabIndex: number | undefined = data?.options?.tabIndex;
+
+    return tabIndex ?? 0;
   }
 
-  private getItemIndex($item: dxElementWrapper): number | undefined {
-    const index = $item.data(this.host._itemIndexKey()) as unknown as number | undefined;
-    return typeof index === 'number' ? index : undefined;
+  private getItemIndex($item: dxElementWrapper): number {
+    const index = $item.data(this.host._itemIndexKey());
+    // @ts-expect-error ts-error
+    return index;
   }
 
   attach(): void {
@@ -348,7 +350,6 @@ export class RovingTabIndexController {
 
     return {
       index: this.getItemIndex($item),
-      overflow: $item.hasClass(DROPDOWNMENU_BUTTON_CLASS),
     };
   }
 
@@ -366,7 +367,6 @@ export class RovingTabIndexController {
 
     return {
       index: this.getItemIndex($item),
-      overflow: $item.hasClass(DROPDOWNMENU_BUTTON_CLASS),
     };
   }
 
@@ -393,32 +393,31 @@ export class RovingTabIndexController {
     $available: dxElementWrapper,
     descriptor: FocusRestoreDescriptor,
   ): dxElementWrapper | undefined {
-    const { index, overflow } = descriptor;
+    const { index } = descriptor;
 
-    if (overflow) {
+    if (index === undefined) {
       const $overflow = $available.filter(`.${DROPDOWNMENU_BUTTON_CLASS}`);
-      if ($overflow.length) {
-        return $overflow.first();
-      }
+      return $overflow.length ? $overflow.first() : $available.first();
     }
 
-    if (index !== undefined) {
-      const available = $available.toArray();
-      const getIndex = (el: Element): number | undefined => this.getItemIndex($(el));
+    const available = $available.toArray();
+    const getIndex = (el: Element): number | undefined => this.getItemIndex($(el));
 
-      const exact = available.find((el) => getIndex(el) === index);
-      if (exact) {
-        return $(exact);
-      }
-
-      const nearest = available.find((el) => {
-        const elIndex = getIndex(el);
-        return elIndex !== undefined && elIndex >= index;
-      });
-
-      return $(nearest ?? available[available.length - 1]);
+    const exact = available.find((el) => getIndex(el) === index);
+    if (exact) {
+      return $(exact);
     }
 
-    return $available.first();
+    const sorted = available
+      .map((el) => ({ el, elIndex: getIndex(el) }))
+      .filter((entry): entry is { el: Element; elIndex: number } => entry.elIndex !== undefined)
+      .sort((a, b) => a.elIndex - b.elIndex);
+
+    if (sorted.length) {
+      const nearest = sorted.find((entry) => entry.elIndex >= index) ?? sorted[sorted.length - 1];
+      return $(nearest.el);
+    }
+
+    return $(available[available.length - 1]);
   }
 }
