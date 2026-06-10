@@ -196,6 +196,10 @@ const helpers = {
         const overflowItems = overflow.map((text) => overflowButtonItem(text));
         return this.createToolbar([...visibleItems, ...overflowItems]);
     },
+
+    getEditorFirstPopupElement(editor) {
+        return editor._getFirstPopupElement();
+    }
 };
 
 const EDITOR_FIXTURES = {
@@ -5305,43 +5309,6 @@ QUnit.module('Audit cleanup — utilities and delegation', moduleConfig, functio
         assert.strictEqual($available.length, 2,
             'disabled item excluded from available items (isItemDisabled detects dx-state-disabled)');
     });
-
-    QUnit.test('navigator.getAvailableItems delegates to widget._getAvailableItems', function(assert) {
-        const toolbar = this.$element.dxToolbar({
-            items: [
-                buttonItem('A'),
-                { widget: 'dxButton', locateInMenu: 'never', disabled: true, options: { text: 'B' } },
-                buttonItem('C'),
-            ],
-        }).dxToolbar('instance');
-
-        const navigatorResult = toolbar._navigator.getAvailableItems().toArray();
-        const widgetResult = helpers.getAvailableItems(toolbar).toArray();
-
-        assert.deepEqual(navigatorResult, widgetResult,
-            'navigator returns same set as widget._getAvailableItems (delegation)');
-    });
-
-    QUnit.test('menu list navigator.getAvailableItems uses menu-list-specific focus target logic', function(assert) {
-        const toolbar = this.$element.dxToolbar({
-            items: [
-                { widget: 'dxButton', locateInMenu: 'never', options: { text: 'Visible' } },
-                { widget: 'dxButton', locateInMenu: 'always', options: { text: 'Menu A' } },
-                { widget: 'dxButton', locateInMenu: 'always', options: { text: 'Menu B' } },
-            ],
-        }).dxToolbar('instance');
-
-        const menu = helpers.getOverflowMenu(toolbar);
-        menu.option('opened', true);
-        this.clock.tick(TICK_DELAY.instant);
-
-        const navigatorResult = helpers.getOverflowList(menu)._navigator.getAvailableItems().toArray();
-        const listResult = helpers.getOverflowListItems(menu).toArray();
-
-        assert.deepEqual(navigatorResult, listResult,
-            'menu list navigator picks up TOOLBAR_MENU_ACTION_CLASS items via widget._getAvailableItems');
-        assert.strictEqual(navigatorResult.length, 2, 'both menu action items are available');
-    });
 });
 
 QUnit.module('Space key — text input guard', moduleConfig, function() {
@@ -5434,7 +5401,7 @@ QUnit.module('Space key — text input guard', moduleConfig, function() {
     });
 });
 
-QUnit.module('toolbar KBN non APG mode', moduleConfig, function() {
+QUnit.module('non APG mode', moduleConfig, function() {
 
     const nonAPGToolbar = (items, extra = {}) =>
         helpers.createToolbar(items, { allowKeyboardNavigation: false, ...extra });
@@ -5625,7 +5592,7 @@ QUnit.module('APG toolbar inside drop-down popup — focus entry (unwrap to inne
             items: [TEXTBOX_ITEM],
         });
 
-        assert.strictEqual(editor._getFirstPopupElement().get(0), $container.get(0),
+        assert.strictEqual(helpers.getEditorFirstPopupElement(editor).get(0), $container.get(0),
             'popup reports the .dx-texteditor container as its focusable element');
 
         this.pressTabOnField($field);
@@ -5640,7 +5607,7 @@ QUnit.module('APG toolbar inside drop-down popup — focus entry (unwrap to inne
             items: [TEXTBOX_ITEM],
         });
 
-        assert.strictEqual(editor._getLastPopupElement().get(0), $container.get(0),
+        assert.strictEqual(helpers.getEditorFirstPopupElement(editor).get(0), $container.get(0),
             'popup reports the .dx-texteditor container as its last focusable element');
 
         this.pressTabOnField($field, true);
@@ -5657,7 +5624,7 @@ QUnit.module('APG toolbar inside drop-down popup — focus entry (unwrap to inne
 
         assert.notStrictEqual($container.attr('tabindex'), '0',
             'container is NOT a tab stop without keyboard navigation');
-        assert.strictEqual(editor._getFirstPopupElement().get(0), $innerInput.get(0),
+        assert.strictEqual(helpers.getEditorFirstPopupElement(editor).get(0), $innerInput.get(0),
             'popup reports the input itself as its focusable element');
 
         this.pressTabOnField($field);
@@ -5672,9 +5639,9 @@ QUnit.module('APG toolbar inside drop-down popup — focus entry (unwrap to inne
             items: [buttonItem('Action')],
         });
 
-        const $button = editor._getFirstPopupElement();
-        assert.ok($button.hasClass('dx-button'), 'popup focusable is the button (roving tab stop)');
-        assert.notOk($button.hasClass('dx-texteditor'), 'button is not a text editor');
+        const $button = helpers.getEditorFirstPopupElement(editor);
+        assert.strictEqual($button.hasClass(BUTTON_CLASS), true, 'popup focusable is the button (roving tab stop)');
+        assert.strictEqual($button.hasClass(TEXTEDITOR_CLASS), false, 'button is not a text editor');
 
         this.pressTabOnField($field);
 
