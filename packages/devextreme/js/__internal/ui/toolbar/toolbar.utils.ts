@@ -9,7 +9,6 @@ import { DISABLED_STATE_CLASS, type SupportedKeys, WIDGET_CLASS } from '@ts/core
 import eventsEngine from '@ts/events/core/m_events_engine';
 import type { KeyboardKeyDownEvent } from '@ts/events/core/m_keyboard_processor';
 import { BUTTON_GROUP_CLASS } from '@ts/ui/button_group';
-import type { ListBase } from '@ts/ui/list/list.base';
 import { OVERLAY_CONTENT_CLASS } from '@ts/ui/overlay/overlay';
 import {
   DROPDOWNMENU_BUTTON_CLASS,
@@ -22,6 +21,7 @@ import {
   TOOLBAR_ITEMS,
   TOOLBAR_WIDGETS_SELECTOR,
 } from '@ts/ui/toolbar/constants';
+import type ToolbarMenuList from '@ts/ui/toolbar/internal/toolbar.menu.list';
 import type Toolbar from '@ts/ui/toolbar/toolbar';
 
 function getItemElementData($element: dxElementWrapper): Record<string, unknown> {
@@ -186,7 +186,7 @@ export function setItemWidgetFocusState($item: dxElementWrapper, isFocused: bool
 }
 
 export function toggleItemFocusableElementTabIndex(
-  context: Toolbar | ListBase | undefined,
+  context: Toolbar | ToolbarMenuList | undefined,
   item: Item,
 ): void {
   if (!context) return;

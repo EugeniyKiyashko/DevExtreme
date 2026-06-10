@@ -61,6 +61,10 @@ export default class ToolbarMenuList extends ListBase {
     // roving tabIndex: no synthetic id needed for aria-activedescendant
   }
 
+  _getItemData(itemElement: Element | dxElementWrapper): Item {
+    return super._getItemData(itemElement) as Item;
+  }
+
   _initMarkup(): void {
     this._renderSections();
     super._initMarkup();

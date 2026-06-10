@@ -82,7 +82,7 @@ export interface ToolbarBaseProperties<
 
 class ToolbarBase<
   TProperties extends ToolbarBaseProperties = ToolbarBaseProperties,
-> extends CollectionWidgetAsync<TProperties> {
+> extends CollectionWidgetAsync<TProperties, Item> {
   _$toolbarItemsContainer!: dxElementWrapper;
 
   _$beforeSection!: dxElementWrapper;

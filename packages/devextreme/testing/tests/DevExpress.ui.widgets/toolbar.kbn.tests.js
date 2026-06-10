@@ -5123,7 +5123,6 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
         const descriptor = nav.captureFocusedItem();
         assert.ok(descriptor && typeof descriptor === 'object', 'focus on item yields a descriptor');
         assert.strictEqual(descriptor.index, 0, 'descriptor.index is the focused item index');
-        assert.strictEqual(descriptor.overflow, false, 'descriptor.overflow is false for a normal item');
 
         const outside = $('<button type="button">').appendTo('#qunit-fixture').get(0);
         outside.focus();
@@ -5138,7 +5137,7 @@ QUnit.module('Focus restore on full re-render — edge cases', moduleConfig, fun
     QUnit.test('body focus during a re-render does not clobber the captured descriptor', function(assert) {
         const toolbar = createToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         // seed a pending descriptor as if an earlier capture happened on item #2
-        toolbar._pendingFocusDescriptor = { index: 2, overflow: false };
+        toolbar._pendingFocusDescriptor = { index: 2 };
         if(getActiveElement() && getActiveElement() !== document.body) {
             getActiveElement().blur();
         }

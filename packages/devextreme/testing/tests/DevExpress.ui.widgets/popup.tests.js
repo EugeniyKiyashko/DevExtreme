@@ -385,7 +385,7 @@ QUnit.module('basic', {
         assert.equal($bottomToolbar.text(), 'bottom text', 'bottom toolbar has correct content');
     });
 
-    QUnit.test('popup toolbars have focusStateEnabled: false', function(assert) {
+    QUnit.test('popup toolbars have allowKeyboardNavigation: false', function(assert) {
         const $popup = $('#popup').dxPopup({
             visible: true,
             showTitle: true,
@@ -394,17 +394,17 @@ QUnit.module('basic', {
         });
         const instance = $popup.dxPopup('instance');
 
-        const $bottomToolbar = instance.$content().parent().find('.' + POPUP_BOTTOM_CLASS);
+        const $bottomToolbar = instance.$content().parent().find(`.${POPUP_BOTTOM_CLASS}`);
         const bottomToolbarInstance = $bottomToolbar.dxToolbar('instance');
 
-        assert.strictEqual(bottomToolbarInstance.option('focusStateEnabled'), false,
-            'bottom toolbar has focusStateEnabled: false');
+        assert.strictEqual(bottomToolbarInstance.option('allowKeyboardNavigation'), false,
+            'bottom toolbar has allowKeyboardNavigation: false');
 
-        const $topToolbar = instance.$content().parent().find('.' + POPUP_TITLE_CLASS);
+        const $topToolbar = instance.$content().parent().find(`.${POPUP_TITLE_CLASS}`);
         const topToolbarInstance = $topToolbar.dxToolbar('instance');
 
-        assert.strictEqual(topToolbarInstance.option('focusStateEnabled'), false,
-            'top toolbar has focusStateEnabled: false');
+        assert.strictEqual(topToolbarInstance.option('allowKeyboardNavigation'), false,
+            'top toolbar has allowKeyboardNavigation: false');
     });
 
     QUnit.test(`top toolbar has specific ${POPUP_HAS_CLOSE_BUTTON_CLASS} class`, function(assert) {
