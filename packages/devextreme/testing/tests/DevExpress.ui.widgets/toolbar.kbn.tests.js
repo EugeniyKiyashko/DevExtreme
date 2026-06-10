@@ -5434,20 +5434,20 @@ QUnit.module('Space key — text input guard', moduleConfig, function() {
     });
 });
 
-QUnit.module('Legacy KBN', moduleConfig, function() {
+QUnit.module('toolbar KBN non APG mode', moduleConfig, function() {
 
-    const legacyToolbar = (items, extra = {}) =>
+    const nonAPGToolbar = (items, extra = {}) =>
         helpers.createToolbar(items, { allowKeyboardNavigation: false, ...extra });
 
     QUnit.test('no tabindex=-1 — every item stays in the native tab order', function(assert) {
-        legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        nonAPGToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
 
         assert.strictEqual(this.$element.find('[tabindex="-1"]').length, 0,
             'no element has tabindex=-1 in legacy mode');
     });
 
     QUnit.test('each button item keeps its natural tabindex=0 — multiple tab stops', function(assert) {
-        legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        nonAPGToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
 
         const $buttons = this.$element.find(`.${BUTTON_CLASS}`);
         const naturalCount = $buttons.toArray().filter(
@@ -5459,7 +5459,7 @@ QUnit.module('Legacy KBN', moduleConfig, function() {
     });
 
     QUnit.test('ArrowRight on a focused button does not move browser focus to the next item', function(assert) {
-        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const toolbar = nonAPGToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         const $btn = helpers.findFocusTarget(helpers.focusItemAt(toolbar, 0));
         const elementBefore = getActiveElement();
 
@@ -5471,7 +5471,7 @@ QUnit.module('Legacy KBN', moduleConfig, function() {
     });
 
     QUnit.test('ArrowLeft on a focused button does not move browser focus to the previous item', function(assert) {
-        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const toolbar = nonAPGToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         const $btn = helpers.findFocusTarget(helpers.focusItemAt(toolbar, 2));
         const elementBefore = getActiveElement();
 
@@ -5483,7 +5483,7 @@ QUnit.module('Legacy KBN', moduleConfig, function() {
     });
 
     QUnit.test('Home and End keys do not move browser focus from the focused button', function(assert) {
-        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const toolbar = nonAPGToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         const $btn = helpers.findFocusTarget(helpers.focusItemAt(toolbar, 1));
 
         helpers.press('Home', $btn.get(0));
@@ -5496,7 +5496,7 @@ QUnit.module('Legacy KBN', moduleConfig, function() {
     });
 
     QUnit.test('ArrowDown and ArrowUp do not move browser focus from the focused button', function(assert) {
-        const toolbar = legacyToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
+        const toolbar = nonAPGToolbar([buttonItem('A'), buttonItem('B'), buttonItem('C')]);
         const $btn = helpers.findFocusTarget(helpers.focusItemAt(toolbar, 1));
 
         helpers.press('ArrowDown', $btn.get(0));
