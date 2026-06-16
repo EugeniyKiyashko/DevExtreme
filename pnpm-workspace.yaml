@@ -41,7 +41,7 @@ overrides:
   "form-data@<4.0.6": "^4.0.6"
 
 catalog:
-  axe-core: ^4.11.1
+  axe-core: ^4.12.1
   inferno: ^8.2.3
   inferno-hydrate: ^8.2.3
   inferno-create-element: ^8.2.3
