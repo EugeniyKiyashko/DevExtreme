@@ -331,6 +331,7 @@ class Sortable extends Draggable {
     return true;
   }
 
+  // @ts-expect-error dragEnd returns the event result or a resolved deferred
   dragEnd(sourceEvent) {
     this._unsubscribeFromSourceScroll();
 

@@ -136,6 +136,7 @@ function baseOperation(grid) {
 }
 
 export function anyOf(grid): CustomOperation {
+  // @ts-expect-error the operation is merged with the base one
   return extend(baseOperation(grid), {
     name: 'anyof',
     icon: 'selectall',
@@ -145,6 +146,7 @@ export function anyOf(grid): CustomOperation {
 
 export function noneOf(grid): CustomOperation {
   const baseOp = baseOperation(grid);
+  // @ts-expect-error the operation is merged with the base one
   return extend({}, baseOp, {
     calculateFilterExpression(filterValue, field, fields) {
       const baseFilter = baseOp.calculateFilterExpression(filterValue, field, fields);
