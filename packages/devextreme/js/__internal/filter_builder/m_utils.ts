@@ -215,7 +215,6 @@ export function getOperationFromAvailable(operation, availableOperations) {
       return availableOperations[i];
     }
   }
-  // @ts-expect-error wrong usage of new
   throw new errors.Error('E1048', operation);
 }
 
@@ -321,7 +320,6 @@ export function getField(dataField, fields) {
   if (extendedFields.length > 0) {
     return extendedFields[0];
   }
-  // @ts-expect-error wrong usage of new
   throw new errors.Error('E1047', dataField);
 }
 
